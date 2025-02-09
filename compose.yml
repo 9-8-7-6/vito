@@ -6,7 +6,7 @@ services:
      POSTGRES_USER: ${DATABASE_USERNAME}
      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
    ports:
-     - "5431:5431"
+     - "5431:5432"
    volumes:
      - postgres_data:/var/lib/postgresql/data
    env_file:
@@ -21,6 +21,7 @@ services:
  django-web:
    build: .
    container_name: django-docker
+   restart: always    
    ports:
      - "8000:8000"
    depends_on:
@@ -40,5 +41,7 @@ services:
      DATABASE_PORT: ${DATABASE_PORT}
    env_file:
      - .env
+   volumes:
+     - .:/app
 volumes:
    postgres_data:

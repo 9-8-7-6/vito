@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'bookkeeping',
-    'rest_framework',
     'drf_yasg',
 ]
 
@@ -87,7 +86,7 @@ DATABASES = {
          'USER': os.getenv('DATABASE_USERNAME', 'myprojectuser'),
          'PASSWORD': os.getenv('DATABASE_PASSWORD', 'password'),
          'HOST': os.getenv('DATABASE_HOST', '127.0.0.1'),
-         'PORT': os.getenv('DATABASE_PORT', 5431),
+         'PORT': os.getenv('DATABASE_PORT', 5432),
      }
  }
 
