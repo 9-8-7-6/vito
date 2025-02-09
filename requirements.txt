@@ -29,6 +29,7 @@ pytz==2025.1
 PyYAML==6.0.2
 requests==2.32.3
 screen==1.0.1
+setuptools==75.8.0
 simplejson==3.19.3
 six==1.17.0
 sqlparse==0.5.3
