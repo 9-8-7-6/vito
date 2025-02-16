@@ -1,7 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import User
 from decimal import Decimal
-# Create your models here.
+
+class User(models.Model):
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        db_table = "user"
+
+    def __str__(self):
+        return self.name
 
 class Asset(models.Model):
     id = models.AutoField(primary_key=True)
@@ -13,7 +20,9 @@ class Asset(models.Model):
     
     class Meta:
         db_table = "asset"
-        unique_together = ('user', 'type')
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'type'], name='unique_user_asset_type')
+        ]
         
     def __str__(self):
         return self.type
@@ -29,7 +38,7 @@ class Account(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.user.username} - Account"
+        return f"{self.user.name} - Account"
 
 class Transaction(models.Model):
     class TransactionType(models.IntegerChoices):
@@ -38,9 +47,15 @@ class Transaction(models.Model):
         TRANSFER = 3, "Transfer"
 
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name="transactions")
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, null=True, blank=True)
     transaction_type = models.PositiveSmallIntegerField(choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
+    from_account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="transfers_out", null=True, blank=True
+    )
+    to_account = models.ForeignKey(
+        Account, on_delete=models.CASCADE, related_name="transfers_in", null=True, blank=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
