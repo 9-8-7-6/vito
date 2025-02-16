@@ -1,13 +1,11 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path, include
 from .views import AccountViewSet, AssetViewSet, TransactionViewSet, UserViewSet
 
 router = DefaultRouter()
-router.register('accounts', AccountViewSet, basename='account')
-router.register('assets', AssetViewSet, basename='asset')
-router.register('transactions', TransactionViewSet, basename='transaction')
-router.register('user', UserViewSet, basename='user')
+router.register('user', UserViewSet, basename='註冊user')
+router.register('accounts', AccountViewSet, basename='user的餘額')
+router.register('assets', AssetViewSet, basename='user的該資產的餘額')
+router.register('transactions', TransactionViewSet, basename='交易紀錄')
 
-urlpatterns = [
-    path('', include(router.urls)),
-]
+
+urlpatterns = router.urls

@@ -14,7 +14,7 @@ class AccountViewSet(viewsets.ModelViewSet):
 class AssetViewSet(viewsets.ModelViewSet):
     serializer_class = AssetSerializer
     queryset = Asset.objects.all()
-    
+
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
     queryset = Transaction.objects.all()
