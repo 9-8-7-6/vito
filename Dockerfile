@@ -1,5 +1,5 @@
 # Stage 1: Base build stage
-FROM python:3.13-slim AS builder
+FROM python:latest AS builder
 
 
 RUN apt-get update && apt-get install -y \
@@ -28,7 +28,7 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Stage 2: Production stage
-FROM python:3.13-slim
+FROM python:latest
 
 RUN useradd -m -r appuser && \
     mkdir /app && \
