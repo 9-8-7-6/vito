@@ -46,16 +46,17 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1 
 
-# Switch to non-root user
-# USER appuser
-
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
 
+# Switch to non-root user
+USER appuser
+
+
 # Expose the application port
 EXPOSE 8000 
 
-# Start the application using Gunicorn
-CMD ["watchfiles", "gunicorn --bind 0.0.0.0:8000 --workers 3 vito.wsgi:application", "--", "/app"]
+# Start the application using uwsgi
+CMD ["watchfiles", "uwsgi --ini /app/uwsgi.ini", "--", "/app"]

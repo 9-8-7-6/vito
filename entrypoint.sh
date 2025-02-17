@@ -6,5 +6,5 @@ python manage.py migrate --noinput
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-echo "Starting Gunicorn server..."
-exec gunicorn --bind 0.0.0.0:8000 --workers 3 vito.wsgi:application
+echo "Starting uWSGI server..."
+exec uwsgi --ini /app/uwsgi.ini
