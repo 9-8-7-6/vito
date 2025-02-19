@@ -35,6 +35,12 @@ class TransactionSerializer(serializers.ModelSerializer):
         if transaction_type == Transaction.TransactionType.TRANSFER:
             if not from_account or not to_account:
                 raise serializers.ValidationError("Both from_account and to_account are required for a Transfer transaction.")
+            if from_account == to_account:
+                raise serializers.ValidationError("from_account and to_account cannot be the same account.")
+            if not Account.objects.filter(pk = from_account.pk).exists():
+                raise serializers.ValidationError("The account hasn't created yet")
+            if not Account.objects.filter(pk = to_account.pk).exists():
+                raise serializers.ValidationError("The account hasn't created yet")
         else:
             if from_account or to_account:
                 raise serializers.ValidationError("from_account and to_account should be null if the transfer type is Transfer.")
