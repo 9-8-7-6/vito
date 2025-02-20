@@ -37,15 +37,11 @@ class TransactionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Both from_account and to_account are required for a Transfer transaction.")
             if from_account == to_account:
                 raise serializers.ValidationError("from_account and to_account cannot be the same account.")
-            if not Account.objects.filter(pk = from_account.pk).exists():
-                raise serializers.ValidationError("The account hasn't created yet")
-            if not Account.objects.filter(pk = to_account.pk).exists():
-                raise serializers.ValidationError("The account hasn't created yet")
-        else:
-            if from_account or to_account:
-                raise serializers.ValidationError("from_account and to_account should be null if the transfer type is Transfer.")
 
-        # make sure the asset exists already
+        elif transaction_type in [Transaction.TransactionType.INCOME, Transaction.TransactionType.EXPENSE]:
+            if from_account or to_account:
+                raise serializers.ValidationError("from_account and to_account should only be set for Transfer transactions.")
+        # Validate Asset existence
         if asset and not Asset.objects.filter(id=asset.id).exists():
             raise serializers.ValidationError("The specified asset does not exist.")
 
