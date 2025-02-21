@@ -5,7 +5,7 @@ from decimal import Decimal
 class Account(models.Model):
     username = models.CharField(max_length=255, primary_key=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    created_at = models.DateTieField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -19,7 +19,7 @@ class Asset(models.Model):
     id = models.AutoField(primary_key=True)
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    type = models.CharField(max_length=255)
+    asset_type = models.CharField(max_length=255)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -27,11 +27,11 @@ class Asset(models.Model):
     class Meta:
         db_table = "asset"
         constraints = [
-            models.UniqueConstraint(fields=['account', 'type'], name='unique_account_asset_type')
+            models.UniqueConstraint(fields=['account', 'asset_type'], name='unique_account_asset_asset_type')
         ]
         
     def __str__(self):
-        return self.type
+        return self.asset_type
 
 class Transaction(models.Model):
     class TransactionType(models.IntegerChoices):
