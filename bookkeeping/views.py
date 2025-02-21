@@ -1,11 +1,7 @@
 from django.shortcuts import render
-from .serializers import AccountSerializer, AssetSerializer, TransactionSerializer, UserSerializer
-from .models import Account, Asset, Transaction, User
+from .serializers import AccountSerializer, AssetSerializer, TransactionSerializer
+from .models import Account, Asset, Transaction
 from rest_framework import viewsets
-
-class UserViewSet(viewsets.ModelViewSet):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
 
 class AccountViewSet(viewsets.ModelViewSet):
     serializer_class = AccountSerializer

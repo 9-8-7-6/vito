@@ -1,36 +1,11 @@
 from django.db import models
 from decimal import Decimal
 
-class User(models.Model):
-    name = models.CharField(max_length=255)
-
-    class Meta:
-        db_table = "user"
-
-    def __str__(self):
-        return self.name
-
-class Asset(models.Model):
-    id = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    type = models.CharField(max_length=255)
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = "asset"
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'type'], name='unique_user_asset_type')
-        ]
-        
-    def __str__(self):
-        return self.type
 
 class Account(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, primary_key=True)
+    username = models.CharField(max_length=255, primary_key=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTieField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -39,6 +14,24 @@ class Account(models.Model):
     
     def __str__(self):
         return f"{self.user.name} - Account"
+
+class Asset(models.Model):
+    id = models.AutoField(primary_key=True)
+    # user = models.ForeignKey(User, on_delete=models.CASCADE)
+    account = models.ForeignKey(Account, on_delete=models.CASCADE)
+    type = models.CharField(max_length=255)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = "asset"
+        constraints = [
+            models.UniqueConstraint(fields=['account', 'type'], name='unique_account_asset_type')
+        ]
+        
+    def __str__(self):
+        return self.type
 
 class Transaction(models.Model):
     class TransactionType(models.IntegerChoices):
