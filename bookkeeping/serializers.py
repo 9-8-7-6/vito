@@ -16,7 +16,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'account', 'asset', 'transaction_type', 'from_account', 'to_account'
+            'account', 'asset', 'transaction_type', 'from_account', 'to_account', 'amount'
         ]
 
     def validate(self, data):
@@ -39,3 +39,19 @@ class TransactionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The specified asset does not exist.")
 
         return data
+
+    def create(self, validated_data):
+        account = validated_data.get('account')
+        asset = validated_data.get('asset')
+        asset_type = self.initial_data.get('asset_type')
+        
+        if not Account.objects.filter(username=account.username).exists():
+            account, _ = Account.objects.get_or_create(username=account.username, defaults={"balance": 0})
+
+        if asset is None and asset_type:
+            asset, _ = Asset.objects.get_or_create(account=account, asset_type=asset_type, defaults={"balance": 0})
+
+        validated_data['account'] = account
+        validated_data['asset'] = asset
+
+        return super().create(validated_data)
