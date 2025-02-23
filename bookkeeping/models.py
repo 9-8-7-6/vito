@@ -13,11 +13,10 @@ class Account(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.user.name} - Account"
+        return f"{self.username} - Account"
 
 class Asset(models.Model):
     id = models.AutoField(primary_key=True)
-    # user = models.ForeignKey(User, on_delete=models.CASCADE)
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     asset_type = models.CharField(max_length=255)
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
