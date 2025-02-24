@@ -71,7 +71,7 @@ class TransactionSerializer(serializers.ModelSerializer):
         elif transaction_type == Transaction.TransactionType.EXPENSE:
             if to_account:
                 raise serializers.ValidationError("to_account should only be set for Transfer transactions.")
-            if data['account'].balance < amount:
+            if data['from_account'].balance < amount:
                 raise serializers.ValidationError("Insufficient balance for expense.")
 
         elif transaction_type == Transaction.TransactionType.INCOME:
@@ -89,7 +89,6 @@ class TransactionSerializer(serializers.ModelSerializer):
 
             from_account, _ = Account.objects.get_or_create(username=from_account.username, defaults={"balance": 0})
 
-
             # update balance
             if transaction_type == Transaction.TransactionType.INCOME:
                 from_account.balance += amount
@@ -98,10 +97,12 @@ class TransactionSerializer(serializers.ModelSerializer):
                 from_account.balance -= amount
 
             elif transaction_type == Transaction.TransactionType.TRANSFER:
-                from_account.balance -= amount
+                to_account, _ = Account.objects.get_or_create(username=to_account.username, defaults={"balance": 0})
                 to_account.balance += amount
-                from_account.save()
                 to_account.save()
+
+                from_account.balance -= amount
+                from_account.save()
 
             from_account.save()
 
@@ -115,6 +116,8 @@ class TransactionSerializer(serializers.ModelSerializer):
             elif instance.transaction_type == Transaction.TransactionType.EXPENSE:
                 instance.from_account.balance += instance.amount
             elif instance.transaction_type == Transaction.TransactionType.TRANSFER:
+                if instance.to_account is None:
+                    raise serializers.ValidationError("Transfer transaction must have a to_account.")
                 instance.from_account.balance += instance.amount
                 instance.to_account.balance -= instance.amount
 
@@ -149,7 +152,6 @@ class TransactionSerializer(serializers.ModelSerializer):
 
             instance.from_account.save()
             if instance.transaction_type == Transaction.TransactionType.TRANSFER:
-                instance.from_account.save()
                 instance.to_account.save()
 
             super(Transaction, instance).delete()

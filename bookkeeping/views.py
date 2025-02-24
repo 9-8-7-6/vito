@@ -21,7 +21,6 @@ class AssetViewSet(viewsets.ModelViewSet):
         with db_transaction.atomic():
             account.balance -= balance_to_reduce
             account.save()
-            
             asset_instance.delete()
 
         return Response({"message": "Asset deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
@@ -58,8 +57,26 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         transaction_instance = self.get_object()
+        from_account = transaction_instance.from_account
+        to_account = transaction_instance.to_account
+        balance_to_reduce = transaction_instance.amount
+        from_account.balance -= balance_to_reduce
+        transaction_type = transaction_instance.transaction_type
+        asset = transaction_instance.asset
 
         with db_transaction.atomic():
-            super().delete(instance)
+            asset.balance -= balance_to_reduce
+            asset.save()
+
+            if transaction_type == Transaction.TransactionType.INCOME:
+                from_account.balance -= balance_to_reduce    
+            elif transaction_type == Transaction.TransactionType.EXPENSE:
+                from_account.balance += balance_to_reduce
+            elif transaction_type == Transaction.TransactionType.TRANSFER:
+                from_account.balance += balance_to_reduce
+                to_account.balance -= balance_to_reduce
+                to_account.save()
+            from_account.save()
+            transaction_instance.delete()
 
         return Response({"message": "Transaction deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
