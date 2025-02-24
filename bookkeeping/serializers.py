@@ -23,7 +23,7 @@ class AssetSerializer(serializers.ModelSerializer):
                 username=account_username,
                 defaults={"balance": new_balance}
             )
-        
+
             if not created:
                 account.balance += new_balance
                 account.save()        
@@ -59,6 +59,8 @@ class TransactionSerializer(serializers.ModelSerializer):
         asset = data.get('asset')
         amount = data.get('amount')
 
+        if not asset:
+            raise serializers.ValidationError("Asset is required for transactions.")
         if transaction_type == Transaction.TransactionType.TRANSFER:
             if not from_account or not to_account:
                 raise serializers.ValidationError("Both from_account and to_account are required for a Transfer transaction.")
@@ -66,7 +68,6 @@ class TransactionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("from_account and to_account cannot be the same account.")
             if from_account.balance < amount:
                 raise serializers.ValidationError("Insufficient balance in from_account.")
-
 
         elif transaction_type == Transaction.TransactionType.EXPENSE:
             if to_account:
@@ -86,23 +87,24 @@ class TransactionSerializer(serializers.ModelSerializer):
             transaction_type = validated_data['transaction_type']
             from_account = validated_data.get('from_account')
             to_account = validated_data.get('to_account')
+            asset = validated_data['asset']
 
             from_account, _ = Account.objects.get_or_create(username=from_account.username, defaults={"balance": 0})
 
             # update balance
             if transaction_type == Transaction.TransactionType.INCOME:
                 from_account.balance += amount
+                asset.balance += amount
 
             elif transaction_type == Transaction.TransactionType.EXPENSE:
                 from_account.balance -= amount
+                asset.balance -= amount
 
             elif transaction_type == Transaction.TransactionType.TRANSFER:
                 to_account, _ = Account.objects.get_or_create(username=to_account.username, defaults={"balance": 0})
                 to_account.balance += amount
                 to_account.save()
-
                 from_account.balance -= amount
-                from_account.save()
 
             from_account.save()
 
@@ -110,48 +112,75 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         with transaction.atomic():
+            old_amount = instance.amount
+            new_amount = validated_data.get("amount", instance.amount)
+            transaction_type = instance.transaction_type
+            from_account = instance.from_account
+            to_account = instance.to_account
+            asset = instance.asset
+
             # restore the influence of old transaction first
-            if instance.transaction_type == Transaction.TransactionType.INCOME:
-                instance.from_account.balance -= instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.EXPENSE:
-                instance.from_account.balance += instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.TRANSFER:
+            if transaction_type == Transaction.TransactionType.INCOME:
+                instance.from_account.balance -= old_amount
+                asset.balance -= old_amount
+            elif transaction_type == Transaction.TransactionType.EXPENSE:
+                instance.from_account.balance += old_amount
+                asset.balance += old_amount
+            elif transaction_type == Transaction.TransactionType.TRANSFER:
                 if instance.to_account is None:
                     raise serializers.ValidationError("Transfer transaction must have a to_account.")
-                instance.from_account.balance += instance.amount
-                instance.to_account.balance -= instance.amount
+                
+                if instance.from_account:
+                    instance.from_account.balance += old_amount
+                    instance.from_account.save()
+
+                if instance.to_account:
+                    instance.to_account.balance -= old_amount
+                    instance.to_account.save()
+
 
             instance.from_account.save()
-            if instance.transaction_type == Transaction.TransactionType.TRANSFER:
+            if transaction_type == Transaction.TransactionType.TRANSFER:
                 instance.from_account.save()
                 instance.to_account.save()
                 
             for attr, value in validated_data.items():
                 setattr(instance, attr, value)
                 
-            if instance.transaction_type == Transaction.TransactionType.INCOME:
-                instance.from_account.balance += instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.EXPENSE:
-                instance.from_account.balance -= instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.TRANSFER:
-                instance.from_account.balance -= instance.amount
-                instance.to_account.balance += instance.amount
+            if transaction_type == Transaction.TransactionType.INCOME:
+                instance.from_account.balance += new_amount
+                instance.asset.balance += new_amount
+            elif transaction_type == Transaction.TransactionType.EXPENSE:
+                instance.from_account.balance -= new_amount
+                instance.asset.balance -= new_amount
+            elif transaction_type == Transaction.TransactionType.TRANSFER:
+                instance.from_account.balance -= new_amount
+                instance.to_account.balance += new_amount
 
             instance.save()
+            instance.asset.save()
             return instance
 
     def delete(self, instance):
         with transaction.atomic():
-            if instance.transaction_type == Transaction.TransactionType.INCOME:
-                instance.from_account.balance -= instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.EXPENSE:
-                instance.from_account.balance += instance.amount
-            elif instance.transaction_type == Transaction.TransactionType.TRANSFER:
-                instance.from_account.balance += instance.amount
-                instance.to_account.balance -= instance.amount
+            transaction_type = instance.transaction_type
+            from_account = instance.from_account
+            to_account = instance.to_account
+            asset = instance.asset
+            amount = instance.amount
+
+            if transaction_type == Transaction.TransactionType.INCOME:
+                instance.from_account.balance -= amount
+                asset.balance -= amount
+            elif transaction_type == Transaction.TransactionType.EXPENSE:
+                instance.from_account.balance += amount
+                asset.balance += amount
+            elif transaction_type == Transaction.TransactionType.TRANSFER:
+                instance.from_account.balance += amount
+                instance.to_account.balance -= amount
 
             instance.from_account.save()
-            if instance.transaction_type == Transaction.TransactionType.TRANSFER:
+            if transaction_type == Transaction.TransactionType.TRANSFER:
                 instance.to_account.save()
 
-            super(Transaction, instance).delete()
+            instance.delete()

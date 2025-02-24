@@ -19,6 +19,8 @@ class AssetViewSet(viewsets.ModelViewSet):
         balance_to_reduce = asset_instance.balance
 
         with db_transaction.atomic():
+            if account.balance < balance_to_reduce:
+                return Response({"error": "Account balance cannot be negative"}, status=status.HTTP_400_BAD_REQUEST)
             account.balance -= balance_to_reduce
             account.save()
             asset_instance.delete()
@@ -59,10 +61,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
         transaction_instance = self.get_object()
         from_account = transaction_instance.from_account
         to_account = transaction_instance.to_account
-        balance_to_reduce = transaction_instance.amount
-        from_account.balance -= balance_to_reduce
-        transaction_type = transaction_instance.transaction_type
         asset = transaction_instance.asset
+        balance_to_reduce = transaction_instance.amount
+        transaction_type = transaction_instance.transaction_type
 
         with db_transaction.atomic():
             asset.balance -= balance_to_reduce

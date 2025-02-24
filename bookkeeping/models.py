@@ -55,4 +55,4 @@ class Transaction(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.account} - {self.amount} ({self.asset})"
+        return f"Transaction {self.id}: {self.from_account} -> {self.to_account} | {self.amount} ({self.asset})"
