@@ -8,9 +8,42 @@ class AccountSerializer(serializers.ModelSerializer):
         fields = ['username', 'balance']
 
 class AssetSerializer(serializers.ModelSerializer):
+    account_username = serializers.CharField(write_only=True)
+
     class Meta:
         model = Asset
-        fields = ['account', 'asset_type', 'balance']
+        fields = ['account_username', 'asset_type', 'balance']
+        
+    def create(self, validated_data):
+        account_username = validated_data.pop('account_username')   # get account_username
+        new_balance = validated_data.get("balance", 0)
+        
+        with transaction.atomic():
+            account, created = Account.objects.get_or_create(
+                username=account_username,
+                defaults={"balance": new_balance}
+            )
+        
+            if not created:
+                account.balance += new_balance
+                account.save()        
+            
+            asset = Asset.objects.create(account=account, **validated_data)
+
+        return asset
+        
+    def update(self, instance, validated_data):
+        new_balance = validated_data.get("balance", instance.balance)
+
+        with transaction.atomic():
+            account = instance.account
+            account.balance += (new_balance - instance.balance)
+            account.save()
+            
+            instance.balance = new_balance
+            instance.save()
+        
+        return instance
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
