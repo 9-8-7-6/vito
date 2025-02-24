@@ -38,7 +38,7 @@ class Transaction(models.Model):
         EXPENSE = 2, "Expense"
         TRANSFER = 3, "Transfer"
 
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, null=True, blank=True)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, blank=True)
     transaction_type = models.PositiveSmallIntegerField(choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     from_account = models.ForeignKey(
