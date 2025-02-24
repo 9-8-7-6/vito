@@ -22,13 +22,13 @@ class Asset(models.Model):
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         db_table = "asset"
         constraints = [
             models.UniqueConstraint(fields=['account', 'asset_type'], name='unique_account_asset_asset_type')
         ]
-        
+
     def __str__(self):
         return self.asset_type
 

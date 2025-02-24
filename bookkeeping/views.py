@@ -12,6 +12,20 @@ class AccountViewSet(viewsets.ModelViewSet):
 class AssetViewSet(viewsets.ModelViewSet):
     serializer_class = AssetSerializer
     queryset = Asset.objects.all()
+    
+    def destroy(self, request, *args, **kwargs):
+        asset_instance = self.get_object()
+        account = asset_instance.account
+        balance_to_reduce = asset_instance.balance
+
+        with db_transaction.atomic():
+            account.balance -= balance_to_reduce
+            account.save()
+            
+            asset_instance.delete()
+
+        return Response({"message": "Asset deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
     serializer_class = TransactionSerializer
