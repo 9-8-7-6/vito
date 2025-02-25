@@ -32,6 +32,20 @@ class Asset(models.Model):
     def __str__(self):
         return self.asset_type
 
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    category_type = models.CharField(
+        max_length=10,
+        choices=[('INCOME', 'Income'), ('EXPENSE', 'Expense')]
+    )
+
+    class Meta:
+        db_table = "category"
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.get_category_type_display()})"
+
 class Transaction(models.Model):
     class TransactionType(models.IntegerChoices):
         INCOME = 1, "Income"
@@ -39,6 +53,7 @@ class Transaction(models.Model):
         TRANSFER = 3, "Transfer"
 
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, blank=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
     transaction_type = models.PositiveSmallIntegerField(choices=TransactionType.choices)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     from_account = models.ForeignKey(
