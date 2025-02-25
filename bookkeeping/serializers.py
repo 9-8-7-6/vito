@@ -53,11 +53,18 @@ class TransactionSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        transaction_type = data.get('transaction_type')
-        from_account = data.get('from_account')
-        to_account = data.get('to_account')
-        asset = data.get('asset')
-        amount = data.get('amount')
+        if self.instance:
+            transaction_type = data.get('transaction_type', self.instance.transaction_type)
+            from_account = data.get('from_account', self.instance.from_account)
+            to_account = data.get('to_account', self.instance.to_account)
+            asset = data.get('asset', self.instance.asset)
+            amount = data.get('amount', self.instance.amount)
+        else:
+            transaction_type = data.get('transaction_type')
+            from_account = data.get('from_account')
+            to_account = data.get('to_account')
+            asset = data.get('asset')
+            amount = data.get('amount')
 
         if not asset:
             raise serializers.ValidationError("Asset is required for transactions.")
