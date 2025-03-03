@@ -5,10 +5,12 @@ edition = "2021"
 
 [dependencies]
 axum = "0.8.1"
+chrono = { version = "0.4.40", features = ["serde"] }
 dotenvy = "0.15.7"
 hyper = "1.6.0"
 lapin = "2.5.0"
-serde = "1.0.218"
-sqlx = { version = "0.8.3" , features = ["postgres", "runtime-tokio", "tls-native-tls"] }
+serde = { version = "1.0.218", features = ["derive"] }
+sqlx = { version = "0.8.3" , features = ["postgres", "runtime-tokio", "tls-native-tls", "macros", "uuid", "chrono"] }
 tokio = { version = "1.43.0", features = ["full"] }
 tower-http = "0.6.2"
+uuid = { version = "1.15.1", features = ["serde", "v4"] }
