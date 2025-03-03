@@ -5,6 +5,7 @@ mod repository;
 mod routes;
 
 use axum::{serve, Router};
+use dotenvy::dotenv;
 use routes::account_routes::account_routes;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -12,6 +13,7 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let state = Arc::new(db::init_db().await);
 
     let app = Router::new().merge(account_routes(state));
