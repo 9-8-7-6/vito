@@ -4,3 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = "0.8.1"
+dotenvy = "0.15.7"
+hyper = "1.6.0"
+serde = "1.0.218"
+sqlx = { version = "0.8.3" , features = ["postgres", "runtime-tokio", "tls-native-tls"] }
+tokio = { version = "1.43.0", features = ["full"] }
+tower-http = "0.6.2"
