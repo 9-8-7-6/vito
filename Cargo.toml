@@ -7,6 +7,7 @@ edition = "2021"
 axum = "0.8.1"
 dotenvy = "0.15.7"
 hyper = "1.6.0"
+lapin = "2.5.0"
 serde = "1.0.218"
 sqlx = { version = "0.8.3" , features = ["postgres", "runtime-tokio", "tls-native-tls"] }
 tokio = { version = "1.43.0", features = ["full"] }
