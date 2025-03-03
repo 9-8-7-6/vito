@@ -1,11 +1,12 @@
 use axum::{extract::State, routing::get, Json, Router};
 use dotenvy::dotenv;
 use serde::Serialize;
-use sqlx::PgPool;
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 
-mod worker;
+mod models;
+mod repository;
 
 #[derive(Clone)]
 struct AppState {
@@ -14,18 +15,7 @@ struct AppState {
 
 #[tokio::main]
 async fn main() {
-    dotenv().ok();
-
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-    println!("🔗 Connecting to database: {}", database_url);
-
-    let pool = PgPool::connect(&database_url)
-        .await
-        .expect("Failed to connect to DB");
-
-    let state = AppState {
-        db_pool: Arc::new(pool),
-    };
+    let state = init_db().await;
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, Axum!" }))
@@ -33,18 +23,28 @@ async fn main() {
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
-    println!("🚀 Server running on {}", addr);
+    println!("Server running on {}", addr);
 
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn health_check() -> &'static str {
-    "OK"
+async fn init_db() -> AppState {
+    dotenv().ok();
+
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
+
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .expect("Failed to connect to DB");
+
+    AppState {
+        db_pool: Arc::new(pool),
+    }
 }
 
-#[derive(Serialize)]
-struct User {
-    id: i32,
-    name: String,
+async fn health_check() -> &'static str {
+    "OK"
 }
