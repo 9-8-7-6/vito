@@ -1,5 +1,6 @@
 use crate::models::Account;
 use chrono::Utc;
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -22,7 +23,7 @@ pub async fn get_account_by_id(pool: &PgPool, account_id: Uuid) -> Result<Accoun
 pub async fn create_account(
     pool: &PgPool,
     user_id: Uuid,
-    balance: f64,
+    balance: Decimal,
 ) -> Result<Account, sqlx::Error> {
     let account = sqlx::query_as::<_, Account>(
         "INSERT INTO accounts (id, user_id, balance, created_at, updated_at) 
@@ -42,7 +43,7 @@ pub async fn create_account(
 pub async fn update_account_balance(
     pool: &PgPool,
     account_id: Uuid,
-    new_balance: f64,
+    new_balance: Decimal,
 ) -> Result<Account, sqlx::Error> {
     let account = sqlx::query_as::<_, Account>(
         "UPDATE accounts 

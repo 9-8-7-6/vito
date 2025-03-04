@@ -8,6 +8,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -29,7 +30,7 @@ pub async fn get_account(
 #[derive(Deserialize)]
 pub struct CreateAccountRequest {
     user_id: Uuid,
-    balance: f64,
+    balance: Decimal,
 }
 
 pub async fn add_account(
@@ -43,7 +44,7 @@ pub async fn add_account(
             Json(Account {
                 id: Uuid::nil(),
                 user_id: Uuid::nil(),
-                balance: 0.0,
+                balance: Decimal::ZERO,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }),
@@ -53,7 +54,7 @@ pub async fn add_account(
 
 #[derive(Deserialize)]
 pub struct UpdateAccountRequest {
-    balance: f64,
+    balance: Decimal,
 }
 
 pub async fn update_account(
@@ -68,7 +69,7 @@ pub async fn update_account(
             Json(Account {
                 id: Uuid::nil(),
                 user_id: Uuid::nil(),
-                balance: 0.0,
+                balance: Decimal::ZERO,
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }),

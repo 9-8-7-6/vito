@@ -10,7 +10,17 @@ dotenvy = "0.15.7"
 hyper = "1.6.0"
 lapin = "2.5.0"
 serde = { version = "1.0.218", features = ["derive"] }
-sqlx = { version = "0.8.3" , features = ["postgres", "runtime-tokio", "tls-native-tls", "macros", "uuid", "chrono", "migrate"] }
+sqlx = { version = "0.8.3", features = [
+    "postgres",
+    "runtime-tokio",
+    "tls-native-tls",
+    "macros",
+    "uuid",
+    "chrono",
+    "migrate",
+    "rust_decimal",
+] }
 tokio = { version = "1.43.0", features = ["full"] }
 tower-http = "0.6.2"
 uuid = { version = "1.15.1", features = ["serde", "v4"] }
+rust_decimal = "1.36.0"
