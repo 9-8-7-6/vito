@@ -7,7 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Asset {
     pub id: Uuid,
-    pub account: Uuid,
+    pub account_id: Uuid,
     pub asset_type: String,
     pub balance: Decimal,
     pub created_at: DateTime<Utc>,
