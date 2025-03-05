@@ -7,6 +7,7 @@ mod routes;
 use axum::{serve, Router};
 use dotenvy::dotenv;
 use routes::account_routes::account_routes;
+use routes::asset_routes::asset_routes;
 use routes::user_routes::user_routes;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -19,7 +20,8 @@ async fn main() {
 
     let app = Router::new()
         .merge(account_routes(state.clone()))
-        .merge(user_routes(state.clone()));
+        .merge(user_routes(state.clone()))
+        .merge(asset_routes(state.clone()));
 
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
     println!("🚀 Server running on {}", addr);
