@@ -1,4 +1,4 @@
-use crate::models::{asset, Asset};
+use crate::models::Asset;
 use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::PgPool;

@@ -1,8 +1,5 @@
 use crate::handlers::account_handler::*;
-use axum::{
-    routing::{delete, get, post, put},
-    Router,
-};
+use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
 
