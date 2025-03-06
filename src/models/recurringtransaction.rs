@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::fmt;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
@@ -10,6 +11,17 @@ pub enum IntervalChoices {
     Daily,
     Weekly,
     Monthly,
+}
+
+impl fmt::Display for IntervalChoices {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            IntervalChoices::Daily => "Daily",
+            IntervalChoices::Weekly => "Weekly",
+            IntervalChoices::Monthly => "Monthly",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
