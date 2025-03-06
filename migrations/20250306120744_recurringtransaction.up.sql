@@ -3,7 +3,7 @@
 -- Add up migration script here
 -- Create RecurringTransaction table
 
-CREATE TABLE IF NOT EXISTS recurringtransactions (
+CREATE TABLE IF NOT EXISTS recurring_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     asset_id UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
