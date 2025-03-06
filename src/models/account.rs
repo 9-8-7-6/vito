@@ -4,7 +4,7 @@ use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
-        
+
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Account {
     pub id: Uuid,
