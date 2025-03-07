@@ -3,6 +3,7 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use std::convert::TryFrom;
 use std::fmt;
 use uuid::Uuid;
 
@@ -14,6 +15,18 @@ pub enum TransactionType {
     Expense = 2,
     Transfer = 3,
     InternalTransfer = 4,
+}
+
+impl fmt::Display for TransactionType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            TransactionType::Income => "Income",
+            TransactionType::Expense => "Expense",
+            TransactionType::Transfer => "Transfer",
+            TransactionType::InternalTransfer => "Internal Transfer",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
