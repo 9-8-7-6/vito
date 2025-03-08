@@ -20,7 +20,10 @@ pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<
     Json(users)
 }
 
-pub async fn get_user_handler(State(pool): State<Arc<PgPool>>, Path(user_id): Path<Uuid>) -> Json<User> {
+pub async fn get_user_handler(
+    State(pool): State<Arc<PgPool>>,
+    Path(user_id): Path<Uuid>,
+) -> Json<User> {
     let user = get_user_by_id(&pool, user_id).await.unwrap();
     Json(user)
 }

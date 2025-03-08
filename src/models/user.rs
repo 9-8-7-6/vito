@@ -47,7 +47,6 @@ impl AuthnBackend for Backend {
     type Credentials = Credentials;
     type Error = std::convert::Infallible;
 
-    
     async fn authenticate(
         &self,
         Credentials { user_id }: Self::Credentials,
