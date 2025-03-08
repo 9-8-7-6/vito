@@ -11,12 +11,12 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_users(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
+pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
     let users = get_users(&pool).await.unwrap();
     Json(users)
 }
 
-pub async fn get_user(State(pool): State<Arc<PgPool>>, Path(user_id): Path<Uuid>) -> Json<User> {
+pub async fn get_user_handler(State(pool): State<Arc<PgPool>>, Path(user_id): Path<Uuid>) -> Json<User> {
     let user = get_user_by_id(&pool, user_id).await.unwrap();
     Json(user)
 }
@@ -27,7 +27,7 @@ pub struct CreateuserRequest {
     email: String,
 }
 
-pub async fn add_user(
+pub async fn add_user_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateuserRequest>,
 ) -> (StatusCode, Json<User>) {
@@ -57,7 +57,7 @@ pub struct UpdateuserRequest {
     pub email: Option<String>,
 }
 
-pub async fn update_user(
+pub async fn update_user_handler(
     State(pool): State<Arc<PgPool>>,
     Path(user_id): Path<Uuid>,
     Json(payload): Json<UpdateuserRequest>,

@@ -14,14 +14,14 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_accounts(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
+pub async fn get_all_accounts_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_accounts(&pool).await {
         Ok(accounts) => AccountList(accounts).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn get_account(
+pub async fn get_account_handler(
     State(pool): State<Arc<PgPool>>,
     Path(account_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -37,7 +37,7 @@ pub struct CreateAccountRequest {
     balance: Decimal,
 }
 
-pub async fn add_account(
+pub async fn add_account_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateAccountRequest>,
 ) -> impl IntoResponse {
@@ -52,7 +52,7 @@ pub struct UpdateAccountRequest {
     balance: Decimal,
 }
 
-pub async fn update_account(
+pub async fn update_account_handler(
     State(pool): State<Arc<PgPool>>,
     Path(account_id): Path<Uuid>,
     Json(payload): Json<UpdateAccountRequest>,

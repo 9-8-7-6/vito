@@ -11,14 +11,14 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_categories(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
+pub async fn get_all_categories_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_categories(&pool).await {
         Ok(categories) => CategoryList(categories).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn get_category(
+pub async fn get_category_handler(
     State(pool): State<Arc<PgPool>>,
     Path(category_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -34,7 +34,7 @@ pub struct CreateCategoryRequest {
     pub category_type: String,
 }
 
-pub async fn add_category(
+pub async fn add_category_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateCategoryRequest>,
 ) -> impl IntoResponse {
@@ -50,7 +50,7 @@ pub struct UpdateCategoryRequest {
     pub category_type: String,
 }
 
-pub async fn update_category(
+pub async fn update_category_handler(
     State(pool): State<Arc<PgPool>>,
     Path(category_id): Path<Uuid>,
     Json(payload): Json<UpdateCategoryRequest>,

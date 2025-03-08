@@ -14,14 +14,14 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_assets(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
+pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_assets(&pool).await {
         Ok(assets) => AssetList(assets).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn get_asset(
+pub async fn get_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(asset_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -38,7 +38,7 @@ pub struct CreateAssetRequest {
     pub balance: Decimal,
 }
 
-pub async fn add_asset(
+pub async fn add_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateAssetRequest>,
 ) -> impl IntoResponse {
@@ -61,7 +61,7 @@ pub struct UpdateAssetRequest {
     pub balance: Decimal,
 }
 
-pub async fn update_asset(
+pub async fn update_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(asset_id): Path<Uuid>,
     Json(payload): Json<UpdateAssetRequest>,

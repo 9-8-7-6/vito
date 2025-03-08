@@ -15,14 +15,14 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_recurring_transactions(
+pub async fn get_all_recurring_transactions_handler(
     State(pool): State<Arc<PgPool>>,
 ) -> Json<Vec<RecurringTransaction>> {
     let transactions = get_recurring_transactions(&pool).await.unwrap();
     Json(transactions)
 }
 
-pub async fn get_recurring_transaction(
+pub async fn get_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> Json<RecurringTransaction> {
@@ -42,7 +42,7 @@ pub struct CreateRecurringTransactionRequest {
     pub transaction_type: TransactionType,
 }
 
-pub async fn add_recurring_transaction(
+pub async fn add_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateRecurringTransactionRequest>,
 ) -> (StatusCode, Json<RecurringTransaction>) {

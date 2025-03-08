@@ -15,14 +15,14 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub async fn get_all_transactions(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
+pub async fn get_all_transactions_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_transactions(&pool).await {
         Ok(transactions) => TransactionList(transactions).into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
 
-pub async fn get_transaction(
+pub async fn get_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -47,7 +47,7 @@ pub struct CreateTransactionRequest {
     image: Option<String>,
 }
 
-pub async fn add_transaction(
+pub async fn add_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateTransactionRequest>,
 ) -> impl IntoResponse {
@@ -87,7 +87,7 @@ pub struct UpdateTransactionRequest {
     image: Option<String>,
 }
 
-pub async fn update_transaction(
+pub async fn update_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
     Json(payload): Json<UpdateTransactionRequest>,

@@ -21,7 +21,7 @@ async fn main() {
     dotenv().ok();
     let state = Arc::new(db::init_db().await);
 
-    let app = Router::new()
+    let routes_all = Router::new()
         .merge(account_routes(state.clone()))
         .merge(user_routes(state.clone()))
         .merge(asset_routes(state.clone()))
@@ -33,5 +33,5 @@ async fn main() {
     println!("🚀 Server running on {}", addr);
 
     let listener = TcpListener::bind(addr).await.unwrap();
-    serve(listener, app).await.unwrap();
+    serve(listener, routes_all).await.unwrap();
 }
