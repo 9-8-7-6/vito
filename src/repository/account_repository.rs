@@ -41,7 +41,7 @@ pub async fn create_account(
         .await
 }
 
-pub async fn update_account_balance(
+pub async fn update_account_info(
     pool: &PgPool,
     account_id: Uuid,
     new_balance: Decimal,

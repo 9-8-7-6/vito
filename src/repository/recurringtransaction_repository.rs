@@ -57,7 +57,7 @@ pub async fn create_recurring_transaction(
     Ok(recurring_transaction)
 }
 
-pub async fn update_recurring_transaction(
+pub async fn update_recurring_transaction_info(
     pool: &PgPool,
     transaction_id: Uuid,
     amount: Option<Decimal>,

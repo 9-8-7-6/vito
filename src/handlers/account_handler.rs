@@ -1,6 +1,6 @@
 use crate::models::AccountList;
 use crate::repository::{
-    create_account, delete_account, get_account_by_id, get_accounts, update_account_balance,
+    create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };
 use axum::{
     extract::{Path, State},
@@ -57,7 +57,7 @@ pub async fn update_account_handler(
     Path(account_id): Path<Uuid>,
     Json(payload): Json<UpdateAccountRequest>,
 ) -> impl IntoResponse {
-    match update_account_balance(&pool, account_id, payload.balance).await {
+    match update_account_info(&pool, account_id, payload.balance).await {
         Ok(account) => account.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }

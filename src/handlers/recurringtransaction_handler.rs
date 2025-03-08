@@ -1,7 +1,7 @@
 use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
 use crate::repository::{
     create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
-    get_recurring_transactions, update_recurring_transaction,
+    get_recurring_transactions, update_recurring_transaction_info,
 };
 use axum::{
     extract::{Path, State},
@@ -78,7 +78,7 @@ pub async fn update_recurring_transaction_handler(
     Path(transaction_id): Path<Uuid>,
     Json(payload): Json<UpdateRecurringTransactionRequest>,
 ) -> (StatusCode, Json<RecurringTransaction>) {
-    match update_recurring_transaction(
+    match update_recurring_transaction_info(
         &pool,
         transaction_id,
         payload.amount,
