@@ -83,7 +83,7 @@ pub async fn create_transaction(
     Ok(transaction)
 }
 
-pub async fn update_transaction(
+pub async fn update_transaction_info(
     pool: &PgPool,
     transaction_id: Uuid,
     from_asset_id: Option<Uuid>,
