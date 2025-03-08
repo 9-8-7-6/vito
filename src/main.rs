@@ -10,6 +10,7 @@ use routes::account_routes::account_routes;
 use routes::asset_routes::asset_routes;
 use routes::category_routes::category_routes;
 use routes::recurringtransaction_routes::recurringtransaction_routes;
+use routes::transaction_routes::transaction_routes;
 use routes::user_routes::user_routes;
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -25,7 +26,8 @@ async fn main() {
         .merge(user_routes(state.clone()))
         .merge(asset_routes(state.clone()))
         .merge(category_routes(state.clone()))
-        .merge(recurringtransaction_routes(state.clone()));
+        .merge(recurringtransaction_routes(state.clone()))
+        .merge(transaction_routes(state.clone()));
 
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
     println!("🚀 Server running on {}", addr);
