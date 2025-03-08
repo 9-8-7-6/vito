@@ -65,7 +65,7 @@ pub async fn delete_category_handler(
     State(pool): State<Arc<PgPool>>,
     Path(category_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match delete_asset(&pool, category_id).await {
+    match delete_category(&pool, category_id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
