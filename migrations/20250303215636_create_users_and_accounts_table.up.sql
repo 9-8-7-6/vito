@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     is_staff BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
-    date_joined TIMESTAMPTZ DEFAULT now()
+    date_joined TIMESTAMPTZ DEFAULT now(),
+    hashed_password VARCHAR(150)
 );
 
 -- Create table accounts

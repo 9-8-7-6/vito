@@ -19,15 +19,21 @@ pub async fn get_user_by_id(pool: &PgPool, user_id: Uuid) -> Result<User, sqlx::
     Ok(user)
 }
 
-pub async fn create_user(pool: &PgPool, username: &str, email: &str) -> Result<User, sqlx::Error> {
+pub async fn create_user(
+    pool: &PgPool,
+    username: &str,
+    email: &str,
+    hashed_password: &str,
+) -> Result<User, sqlx::Error> {
     let user = sqlx::query_as::<_, User>(
-        "INSERT INTO users (id, username, first_name, last_name, email, date_joined)
-        VALUES ($1, $2, '', '', $3, $4) RETURNING *",
+        "INSERT INTO users (id, username, first_name, last_name, email, date_joined, hashed_password)
+        VALUES ($1, $2, '', '', $3, $4, $5) RETURNING *",
     )
     .bind(Uuid::new_v4())
     .bind(username)
     .bind(email)
     .bind(Utc::now())
+    .bind(hashed_password)
     .fetch_one(pool)
     .await?;
 
@@ -41,6 +47,7 @@ pub async fn update_user_info(
     first_name: Option<&str>,
     last_name: Option<&str>,
     email: Option<&str>,
+    hashed_password: Option<&str>,
 ) -> Result<User, sqlx::Error> {
     let user = sqlx::query_as::<_, User>(
         "UPDATE users 
@@ -48,7 +55,7 @@ pub async fn update_user_info(
             first_name = COALESCE($2, first_name),
             last_name = COALESCE($3, last_name),
             email = COALESCE($4, email),
-            is_active = COALESCE($5, is_active),
+            hashed_password = COALESCE($5, hashed_password),
             updated_at = now()
         WHERE id = $6 RETURNING *",
     )
@@ -56,6 +63,7 @@ pub async fn update_user_info(
     .bind(first_name)
     .bind(last_name)
     .bind(email)
+    .bind(hashed_password)
     .bind(user_id)
     .fetch_one(pool)
     .await?;

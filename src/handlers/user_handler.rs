@@ -1,5 +1,9 @@
 use crate::models::User;
 use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -25,13 +29,20 @@ pub async fn get_user_handler(State(pool): State<Arc<PgPool>>, Path(user_id): Pa
 pub struct CreateuserRequest {
     username: String,
     email: String,
+    password: String,
 }
 
 pub async fn add_user_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateuserRequest>,
 ) -> (StatusCode, Json<User>) {
-    match create_user(&pool, &payload.username, &payload.email).await {
+    let salt = SaltString::generate(&mut OsRng);
+    let hashed_password = Argon2::default()
+        .hash_password(payload.password.as_bytes(), &salt)
+        .expect("Failed to hash password")
+        .to_string();
+
+    match create_user(&pool, &payload.username, &payload.email, &hashed_password).await {
         Ok(user) => (StatusCode::CREATED, Json(user)),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -44,6 +55,7 @@ pub async fn add_user_handler(
                 is_staff: false,
                 is_active: false,
                 date_joined: Utc::now(),
+                hashed_password: "".to_string(),
             }),
         ),
     }
@@ -55,6 +67,7 @@ pub struct UpdateuserRequest {
     pub first_name: Option<String>,
     pub last_name: Option<String>,
     pub email: Option<String>,
+    pub password: Option<String>,
 }
 
 pub async fn update_user_handler(
@@ -62,6 +75,18 @@ pub async fn update_user_handler(
     Path(user_id): Path<Uuid>,
     Json(payload): Json<UpdateuserRequest>,
 ) -> (StatusCode, Json<User>) {
+    let hashed_password = if let Some(password) = &payload.password {
+        let salt = SaltString::generate(&mut OsRng);
+        Some(
+            Argon2::default()
+                .hash_password(password.as_bytes(), &salt)
+                .expect("Failed to hash password")
+                .to_string(),
+        )
+    } else {
+        None
+    };
+
     match update_user_info(
         &pool,
         user_id,
@@ -69,6 +94,7 @@ pub async fn update_user_handler(
         payload.first_name.as_deref(),
         payload.last_name.as_deref(),
         payload.email.as_deref(),
+        hashed_password.as_deref(),
     )
     .await
     {
@@ -84,6 +110,7 @@ pub async fn update_user_handler(
                 is_staff: false,
                 is_active: false,
                 date_joined: Utc::now(),
+                hashed_password: "".to_string(),
             }),
         ),
     }

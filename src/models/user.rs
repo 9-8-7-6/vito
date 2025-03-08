@@ -16,6 +16,7 @@ pub struct User {
     pub is_staff: bool,
     pub is_active: bool,
     pub date_joined: DateTime<Utc>,
+    pub hashed_password: String,
 }
 
 impl AuthUser for User {
