@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
@@ -33,7 +34,7 @@ impl AuthUser for User {
 
 #[derive(Clone, Default)]
 struct Backend {
-    users: HashMap<Uuid, User>,
+    users: Arc<RwLock<HashMap<Uuid, User>>>,
 }
 
 #[derive(Clone)]
@@ -51,10 +52,12 @@ impl AuthnBackend for Backend {
         &self,
         Credentials { user_id }: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        Ok(self.users.get(&user_id).cloned())
+        let users = self.users.read().unwrap();
+        Ok(users.get(&user_id).cloned())
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        Ok(self.users.get(user_id).cloned())
+        let users = self.users.read().unwrap();
+        Ok(users.get(user_id).cloned())
     }
 }
