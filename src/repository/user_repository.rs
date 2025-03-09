@@ -7,7 +7,7 @@ const QUERY_SELECT_ALL: &str = "SELECT * FROM users";
 
 const QUERY_SELECT_ONE: &str = "SELECT * FROM users WHERE id = $1";
 
-const QUERY_SELECT_BY_USERNAME: &str = "SELECT * FROM users WHERE username";
+const QUERY_SELECT_BY_USERNAME: &str = "SELECT * FROM users WHERE username = $1";
 
 const QUERY_INSERT: &str = "
     INSERT INTO users (
