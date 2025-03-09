@@ -1,3 +1,7 @@
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
@@ -7,7 +11,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct User {
     pub id: Uuid,
     pub username: String,
@@ -28,18 +32,40 @@ impl AuthUser for User {
     }
 
     fn session_auth_hash(&self) -> &[u8] {
-        self.id.as_bytes()
+        self.hashed_password.as_bytes()
+    }
+}
+
+impl User {
+    pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map(|hash| hash.to_string())
+    }
+
+    pub fn verify_password(&self, password: &str) -> bool {
+        PasswordHash::new(&self.hashed_password)
+            .ok()
+            .and_then(|parsed_hash| {
+                Argon2::default()
+                    .verify_password(password.as_bytes(), &parsed_hash)
+                    .ok()
+            })
+            .is_some()
     }
 }
 
 #[derive(Clone, Default)]
-struct Backend {
+pub struct Backend {
     users: Arc<RwLock<HashMap<Uuid, User>>>,
 }
 
 #[derive(Clone)]
-struct Credentials {
-    user_id: Uuid,
+pub struct Credentials {
+    pub username: String,
+    pub password: String,
 }
 
 #[async_trait]
@@ -50,10 +76,16 @@ impl AuthnBackend for Backend {
 
     async fn authenticate(
         &self,
-        Credentials { user_id }: Self::Credentials,
+        Credentials { username, password }: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
         let users = self.users.read().unwrap();
-        Ok(users.get(&user_id).cloned())
+
+        if let Some(user) = users.values().find(|u| u.username == username) {
+            if user.verify_password(&password) {
+                return Ok(Some(user.clone()));
+            }
+        }
+        Ok(None)
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {

@@ -9,9 +9,9 @@ const QUERY_SELECT_ONE: &str = "SELECT * FROM users WHERE id = $1";
 
 const QUERY_INSERT: &str = "
     INSERT INTO users (
-        id, username, first_name, last_name, email, date_joined, hashed_password
+        id, username, first_name, last_name, email, date_joined, hashed_password, is_staff, is_active
     ) VALUES (
-        $1, $2, '', '', $3, $4, $5
+        $1, $2, '', '', $3, $4, $5, $6, $7
     ) 
     RETURNING *
 ";
@@ -38,10 +38,10 @@ pub async fn get_users(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {
     Ok(users)
 }
 
-pub async fn get_user_by_id(pool: &PgPool, user_id: Uuid) -> Result<User, sqlx::Error> {
+pub async fn get_user_by_id(pool: &PgPool, user_id: Uuid) -> Result<Option<User>, sqlx::Error> {
     let user = sqlx::query_as::<_, User>(QUERY_SELECT_ONE)
         .bind(user_id)
-        .fetch_one(pool)
+        .fetch_optional(pool)
         .await?;
 
     Ok(user)
@@ -59,6 +59,8 @@ pub async fn create_user(
         .bind(email)
         .bind(Utc::now())
         .bind(hashed_password)
+        .bind(false)
+        .bind(true)
         .fetch_one(pool)
         .await?;
 
@@ -88,10 +90,13 @@ pub async fn update_user_info(
 }
 
 pub async fn delete_user(pool: &PgPool, user_id: Uuid) -> Result<(), sqlx::Error> {
-    sqlx::query(QUERY_DELETE)
+    let result = sqlx::query(QUERY_DELETE)
         .bind(user_id)
         .execute(pool)
         .await?;
 
+    if result.rows_affected() == 0 {
+        return Err(sqlx::Error::RowNotFound);
+    }
     Ok(())
 }
