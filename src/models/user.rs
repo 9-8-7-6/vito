@@ -98,8 +98,8 @@ impl AuthnBackend for Backend {
             }
             #[allow(non_snake_case)]
             Ok(None) => {}
-            Err(_) => {
-                return Ok(None);
+            Err(err) => {
+                eprintln!("Database error: {:?}", err);
             }
         }
         Ok(None)

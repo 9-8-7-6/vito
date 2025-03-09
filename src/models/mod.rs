@@ -10,4 +10,4 @@ pub use asset::{Asset, AssetList};
 pub use category::{Category, CategoryList};
 pub use recurring_transaction::{IntervalChoices, RecurringTransaction, TransactionType};
 pub use transaction::{Transaction, TransactionList};
-pub use user::User;
+pub use user::{Backend, Credentials, User};

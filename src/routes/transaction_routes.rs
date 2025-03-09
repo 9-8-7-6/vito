@@ -1,5 +1,7 @@
 use crate::handlers::transaction_handler::*;
+use crate::models::Backend;
 use axum::{routing::get, Router};
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
@@ -15,5 +17,10 @@ pub fn transaction_routes(state: Arc<PgPool>) -> Router {
                 .put(update_transaction_handler)
                 .delete(delete_transaction_handler),
         )
+        .route(
+            "/protected",
+            get(|| async { "Gotta be logged in to see me!" }),
+        )
+        .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }

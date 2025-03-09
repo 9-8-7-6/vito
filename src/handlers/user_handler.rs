@@ -1,14 +1,32 @@
-use crate::models::User;
+use crate::models::{Backend, Credentials, User};
 use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    Json,
+    response::{IntoResponse, Redirect},
+    Form, Json,
 };
 use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+type AuthSession = axum_login::AuthSession<Backend>;
+
+async fn login(mut auth_session: AuthSession, Form(creds): Form<Credentials>) -> impl IntoResponse {
+    let user = match auth_session.authenticate(creds.clone()).await {
+        Ok(Some(user)) => user,
+        #[allow(non_snake_case)]
+        Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),
+        Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+    };
+
+    if auth_session.login(&user).await.is_err() {
+        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+    }
+
+    Redirect::to("/protected").into_response()
+}
 
 pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
     let users = get_users(&pool).await.unwrap();
