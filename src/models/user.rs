@@ -8,6 +8,7 @@ use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
@@ -64,15 +65,17 @@ pub struct Credentials {
 
 #[derive(Clone)]
 pub struct Backend {
-    db: PgPool,
+    db: Arc<PgPool>,
 }
 
 impl Backend {
     pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
-        let db = PgPoolOptions::new()
-            .max_connections(10)
-            .connect(db_url)
-            .await?;
+        let db = Arc::new(
+            PgPoolOptions::new()
+                .max_connections(10)
+                .connect(db_url)
+                .await?,
+        );
         Ok(Self { db })
     }
 }
