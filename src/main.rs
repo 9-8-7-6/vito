@@ -9,7 +9,7 @@ use dotenvy::dotenv;
 use routes::account_routes::account_routes;
 use routes::asset_routes::asset_routes;
 use routes::category_routes::category_routes;
-use routes::recurringtransaction_routes::recurringtransaction_routes;
+use routes::recurring_transaction_routes::recurringtransaction_routes;
 use routes::transaction_routes::transaction_routes;
 use routes::user_routes::user_routes;
 use std::net::SocketAddr;
