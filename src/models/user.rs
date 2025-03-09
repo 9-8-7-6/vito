@@ -5,10 +5,10 @@ use argon2::{
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
+use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
@@ -59,7 +59,7 @@ impl User {
 
 #[derive(Clone, Default)]
 pub struct Backend {
-    users: Arc<RwLock<HashMap<Uuid, User>>>,
+    users: Arc<DashMap<Uuid, User>>,
 }
 
 #[derive(Clone)]
