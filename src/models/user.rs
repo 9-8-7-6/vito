@@ -1,3 +1,4 @@
+use crate::repository::{get_user_by_id, get_user_by_username};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -5,10 +6,8 @@ use argon2::{
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
-use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
-use std::sync::Arc;
+use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
@@ -66,6 +65,21 @@ pub struct Backend {
 pub struct Credentials {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Clone)]
+pub struct Backend {
+    db: PgPool,
+}
+
+impl Backend {
+    pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
+        let db = PgPoolOptions::new()
+            .max_connections(10)
+            .connect(db_url)
+            .await?;
+        Ok(Self { db })
+    }
 }
 
 #[async_trait]
