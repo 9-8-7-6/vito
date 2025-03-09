@@ -36,29 +36,24 @@ impl AuthUser for User {
 }
 
 impl User {
-    pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
+    pub fn hash_password(password: &str) -> Result<String, String> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
+
         argon2
             .hash_password(password.as_bytes(), &salt)
             .map(|hash| hash.to_string())
+            .map_err(|e| e.to_string())
     }
 
     pub fn verify_password(&self, password: &str) -> bool {
-        PasswordHash::new(&self.hashed_password)
-            .ok()
-            .and_then(|parsed_hash| {
-                Argon2::default()
-                    .verify_password(password.as_bytes(), &parsed_hash)
-                    .ok()
-            })
-            .is_some()
+        match PasswordHash::new(&self.hashed_password) {
+            Ok(parsed_hash) => Argon2::default()
+                .verify_password(password.as_bytes(), &parsed_hash)
+                .is_ok(),
+            Err(_) => false,
+        }
     }
-}
-
-#[derive(Clone, Default)]
-pub struct Backend {
-    users: Arc<DashMap<Uuid, User>>,
 }
 
 #[derive(Clone)]
@@ -92,18 +87,25 @@ impl AuthnBackend for Backend {
         &self,
         Credentials { username, password }: Self::Credentials,
     ) -> Result<Option<Self::User>, Self::Error> {
-        let users = self.users.read().unwrap();
-
-        if let Some(user) = users.values().find(|u| u.username == username) {
-            if user.verify_password(&password) {
-                return Ok(Some(user.clone()));
+        match get_user_by_username(&self.db, &username).await {
+            Ok(Some(user)) => {
+                if user.verify_password(&password) {
+                    return Ok(Some(user));
+                }
+            }
+            #[allow(non_snake_case)]
+            Ok(None) => {}
+            Err(_) => {
+                return Ok(None);
             }
         }
         Ok(None)
     }
 
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        let users = self.users.read().unwrap();
-        Ok(users.get(user_id).cloned())
+        match get_user_by_id(&self.db, user_id.clone()).await {
+            Ok(user) => Ok(user),
+            Err(_) => Ok(None),
+        }
     }
 }
