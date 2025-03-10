@@ -22,6 +22,7 @@ use tokio::net::TcpListener;
 async fn main() {
     dotenv().ok();
     let state = Arc::new(db::init_db().await);
+    let session_layer = db::init_redis().await;
 
     let routes_all = Router::new()
         .merge(account_routes(state.clone()))
