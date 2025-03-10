@@ -21,8 +21,7 @@ pub async fn get_user_handler(
 ) -> Result<Json<User>, StatusCode> {
     match get_user_by_id(&pool, user_id).await {
         Ok(Some(user)) => Ok(Json(user)),
-        #[allow(non_snake_case)]
-        Ok(None) => Err(StatusCode::NOT_FOUND),
+        Ok(Option::None) => Err(StatusCode::NOT_FOUND),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }

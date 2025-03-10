@@ -22,8 +22,7 @@ pub async fn api_login(
 
     let user = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
-        #[allow(non_snake_case)]
-        Ok(None) => {
+        Ok(Option::None) => {
             return Ok(Json(json!({
                 "status": "fail",
                 "message": "Invalid username or password"
