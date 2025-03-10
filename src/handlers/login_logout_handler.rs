@@ -5,7 +5,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::Arc;
-use tower_cookies::Cookies;
+use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
 
 pub async fn api_login(
@@ -25,11 +25,23 @@ pub async fn api_login(
         session
             .insert("user_id", user.id.to_string())
             .await
-            .unwrap();
+            .map_err(|_| Error::SessionError)?;
         session
             .insert("username", user.username.clone())
             .await
-            .unwrap();
+            .map_err(|_| Error::SessionError)?;
+
+        let session_cookie = Cookie::build((
+            "session_id",
+            session
+                .id()
+                .map(|id| id.to_string())
+                .unwrap_or("".to_string()),
+        ))
+        .path("/")
+        .http_only(true)
+        .build();
+        cookies.add(session_cookie);
 
         Ok(Json(json!({
             "status": "success",
@@ -45,8 +57,16 @@ pub async fn api_login(
     }
 }
 
-pub async fn api_logout(session: Session) -> Json<Value> {
+pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     session.clear().await;
+
+    let cookie = Cookie::build(("session_id", ""))
+        .path("/")
+        .http_only(true)
+        .max_age(time::Duration::seconds(-1))
+        .build();
+    cookies.remove(cookie);
+
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
 }
 
