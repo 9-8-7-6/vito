@@ -57,7 +57,7 @@ services:
       - redis_data:/data
     environment:
       REDIS_PORT: "6379"
-    command: redis-server --save 60 1 --loglevel warning --requirepass your_redis_password
+    command: redis-server --save 60 1 --loglevel warning
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
