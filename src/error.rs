@@ -9,6 +9,7 @@ pub enum Error {
     DatabaseError,
     InvalidPayload,
     InternalServerError,
+    SessionError,
 }
 
 impl IntoResponse for Error {
@@ -21,6 +22,9 @@ impl IntoResponse for Error {
             Error::InvalidPayload => (StatusCode::BAD_REQUEST, "INVALID_PAYLOAD").into_response(),
             Error::InternalServerError => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR").into_response()
+            }
+            Error::SessionError => {
+                (StatusCode::INTERNAL_SERVER_ERROR, "SESSION_ERROR").into_response()
             }
         }
     }
