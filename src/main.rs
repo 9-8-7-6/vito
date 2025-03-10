@@ -4,6 +4,7 @@ mod models;
 mod repository;
 mod routes;
 
+use crate::models::Backend;
 use axum::{serve, Router};
 use dotenvy::dotenv;
 use routes::account_routes::account_routes;
@@ -22,6 +23,10 @@ use tower_cookies::CookieManagerLayer;
 async fn main() {
     dotenv().ok();
     let state = Arc::new(db::init_db().await);
+    let backend = Backend::new(&std::env::var("DATABASE_URL").unwrap())
+        .await
+        .unwrap();
+
     let session_layer = db::init_redis().await;
 
     let routes_all = Router::new()
@@ -31,7 +36,7 @@ async fn main() {
         .merge(category_routes(state.clone()))
         .merge(recurringtransaction_routes(state.clone()))
         .merge(transaction_routes(state.clone()))
-        .merge(login_routes(state.clone()))
+        .merge(login_routes(backend.clone()))
         .layer(CookieManagerLayer::new())
         .layer(session_layer);
 

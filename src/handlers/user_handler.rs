@@ -1,4 +1,4 @@
-use crate::models::{Backend, Credentials, User};
+use crate::models::User;
 use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 use axum::{
     extract::{Path, State},

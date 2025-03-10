@@ -1,23 +1,26 @@
-use crate::repository::get_user_by_username;
+use crate::models::{Backend, Credentials};
 use axum::{
     extract::{Json, State},
     http::StatusCode,
-    Error,
 };
+use axum_login::AuthnBackend;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use sqlx::PgPool;
-use std::sync::Arc;
 use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
 
 pub async fn api_login(
     cookies: Cookies,
     session: Session,
-    State(pool): State<Arc<PgPool>>,
+    State(backend): State<Backend>,
     payload: Json<LoginPayload>,
 ) -> Result<Json<Value>, StatusCode> {
-    let user = match get_user_by_username(&pool, &payload.username).await {
+    let credentials = Credentials {
+        username: payload.username.clone(),
+        password: payload.password.clone(),
+    };
+
+    let user = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
         #[allow(non_snake_case)]
         Ok(None) => {
@@ -27,16 +30,12 @@ pub async fn api_login(
             })));
         }
         Err(_) => {
-            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+            return Ok(Json(json!({
+                "status": "fail",
+                "message": "Invalid username or password"
+            })));
         }
     };
-
-    if !user.verify_password(&payload.password) {
-        return Ok(Json(json!({
-            "status": "fail",
-            "message": "Invalid username or password"
-        })));
-    }
 
     if session
         .insert("user_id", user.id.to_string())
