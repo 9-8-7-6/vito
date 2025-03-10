@@ -2,12 +2,15 @@ use crate::error::{Error, Result};
 use crate::repository::get_user_by_username;
 use axum::extract::{Json, State};
 use serde::Deserialize;
-use serde_json::json;
-use serde_json::Value;
+use serde_json::{json, Value};
 use sqlx::PgPool;
 use std::sync::Arc;
+use tower_cookies::Cookies;
+use tower_sessions::Session;
 
 pub async fn api_login(
+    cookies: Cookies,
+    session: Session,
     State(pool): State<Arc<PgPool>>,
     payload: Json<LoginPayload>,
 ) -> Result<Json<Value>> {
@@ -19,6 +22,15 @@ pub async fn api_login(
     };
 
     if user.verify_password(&payload.password) {
+        session
+            .insert("user_id", user.id.to_string())
+            .await
+            .unwrap();
+        session
+            .insert("username", user.username.clone())
+            .await
+            .unwrap();
+
         Ok(Json(json!({
             "status": "success",
             "message": "Login successful",
@@ -31,6 +43,11 @@ pub async fn api_login(
     } else {
         Err(Error::LoginFail)
     }
+}
+
+pub async fn api_logout(session: Session) -> Json<Value> {
+    session.clear().await;
+    Json(json!({ "status": "success", "message": "Logged out successfully" }))
 }
 
 #[derive(Debug, Deserialize)]
