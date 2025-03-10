@@ -1,6 +1,9 @@
-use crate::error::{Error, Result};
 use crate::repository::get_user_by_username;
-use axum::extract::{Json, State};
+use axum::{
+    extract::{Json, State},
+    http::StatusCode,
+    Error,
+};
 use serde::Deserialize;
 use serde_json::{json, Value};
 use sqlx::PgPool;
@@ -13,48 +16,56 @@ pub async fn api_login(
     session: Session,
     State(pool): State<Arc<PgPool>>,
     payload: Json<LoginPayload>,
-) -> Result<Json<Value>> {
+) -> Result<Json<Value>, StatusCode> {
     let user = match get_user_by_username(&pool, &payload.username).await {
         Ok(Some(user)) => user,
         #[allow(non_snake_case)]
-        Ok(None) => return Err(Error::LoginFail),
-        Err(_) => return Err(Error::DatabaseError),
+        Ok(None) => {
+            return Ok(Json(json!({
+                "status": "fail",
+                "message": "Invalid username or password"
+            })));
+        }
+        Err(_) => {
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
     };
 
-    if user.verify_password(&payload.password) {
-        session
-            .insert("user_id", user.id.to_string())
-            .await
-            .map_err(|_| Error::SessionError)?;
-        session
+    if !user.verify_password(&payload.password) {
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Invalid username or password"
+        })));
+    }
+
+    if session
+        .insert("user_id", user.id.to_string())
+        .await
+        .is_err()
+        || session
             .insert("username", user.username.clone())
             .await
-            .map_err(|_| Error::SessionError)?;
+            .is_err()
+    {
+        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+    }
 
-        let session_cookie = Cookie::build((
-            "session_id",
-            session
-                .id()
-                .map(|id| id.to_string())
-                .unwrap_or("".to_string()),
-        ))
+    let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
+    let session_cookie = Cookie::build(("session_id", session_id))
         .path("/")
         .http_only(true)
         .build();
-        cookies.add(session_cookie);
+    cookies.add(session_cookie);
 
-        Ok(Json(json!({
-            "status": "success",
-            "message": "Login successful",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email
-            }
-        })))
-    } else {
-        Err(Error::LoginFail)
-    }
+    Ok(Json(json!({
+        "status": "success",
+        "message": "Login successful",
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email
+        }
+    })))
 }
 
 pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
