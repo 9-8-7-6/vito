@@ -10,7 +10,9 @@ use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::repository::{get_user_by_id, get_user_by_username};
+use crate::repository::{
+    create_user, get_user_by_email, get_user_by_id, get_user_by_username,
+};
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct User {
@@ -78,6 +80,19 @@ impl Backend {
                 .await?,
         );
         Ok(Self { db })
+    }
+    pub async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
+        get_user_by_email(&self.db, email).await
+    }
+
+    pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
+        get_user_by_username(&self.db, username).await
+    }
+
+    pub async fn create_user_(&self, user: &User) -> Result<(), sqlx::Error> {
+        create_user(&self.db, &user.username, &user.email, &user.hashed_password)
+            .await
+            .map(|_| ())
     }
 }
 

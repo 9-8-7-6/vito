@@ -7,5 +7,6 @@ pub fn login_routes(backend: Backend) -> Router {
     Router::new()
         .route("/api/login", post(api_login))
         .route("/api/logout", post(api_logout))
+        .route("/api/register", post(api_register))
         .with_state(backend)
 }

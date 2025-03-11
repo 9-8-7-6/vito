@@ -23,5 +23,6 @@ pub use transaction_repository::{
     update_transaction_info,
 };
 pub use user_repository::{
-    create_user, delete_user, get_user_by_id, get_user_by_username, get_users, update_user_info,
+    create_user, get_user_by_email, get_user_by_id, get_user_by_username, get_users,
+    update_user_info,
 };

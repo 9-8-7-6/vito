@@ -8,7 +8,68 @@ use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
 
-use crate::models::{Backend, Credentials};
+use crate::models::{Backend, Credentials, User};
+
+#[derive(Debug, Deserialize)]
+pub struct RegisterPayload {
+    username: String,
+    password: String,
+    email: String,
+}
+
+pub async fn api_register(
+    State(backend): State<Backend>,
+    payload: Json<RegisterPayload>,
+) -> Result<Json<Value>, StatusCode> {
+    if backend
+        .get_user_by_username(&payload.username)
+        .await
+        .unwrap_or(None)
+        .is_some()
+    {
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Username already exists"
+        })));
+    }
+
+    if backend
+        .get_user_by_email(&payload.email)
+        .await
+        .unwrap_or(None)
+        .is_some()
+    {
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Email already registered"
+        })));
+    }
+
+    let hashed_password =
+        User::hash_password(&payload.password).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    let new_user = User {
+        id: Uuid::new_v4(),
+        username: payload.username.clone(),
+        email: payload.email.clone(),
+        hashed_password,
+        first_name: "".to_string(),
+        last_name: "".to_string(),
+        is_staff: false,
+        is_active: true,
+        date_joined: chrono::Utc::now(),
+    };
+
+    backend
+        .create_user_(&new_user)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    Ok(Json(json!({
+        "status": "success",
+        "message": "User registered successfully"
+    })))
+}
 
 pub async fn api_login(
     cookies: Cookies,
