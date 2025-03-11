@@ -1,7 +1,8 @@
-use crate::handlers::asset_handler::*;
 use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
+
+use crate::handlers::asset_handler::*;
 
 pub fn asset_routes(state: Arc<PgPool>) -> Router {
     Router::new()

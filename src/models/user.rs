@@ -1,4 +1,3 @@
-use crate::repository::{get_user_by_id, get_user_by_username};
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -10,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::repository::{get_user_by_id, get_user_by_username};
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct User {

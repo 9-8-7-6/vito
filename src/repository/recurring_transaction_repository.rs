@@ -1,13 +1,12 @@
-use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
+
 const QUERY_SELECT_ALL: &str = "SELECT * FROM recurring_transactions";
-
 const QUERY_SELECT_ONE: &str = "SELECT * FROM recurring_transactions WHERE id = $1";
-
 const QUERY_INSERT: &str = "
     INSERT INTO recurring_transactions (
         id, account_id, asset_id, category_id, amount, interval, 
@@ -17,7 +16,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-
 const QUERY_UPDATE: &str = "
     UPDATE recurring_transactions 
     SET 
@@ -29,7 +27,6 @@ const QUERY_UPDATE: &str = "
     WHERE id = $6 
     RETURNING *
 ";
-
 const QUERY_DELETE: &str = "DELETE FROM recurring_transactions WHERE id = $1";
 
 pub async fn get_recurring_transactions(

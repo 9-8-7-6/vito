@@ -4,20 +4,21 @@ mod models;
 mod repository;
 mod routes;
 
-use crate::models::Backend;
-use axum::{serve, Router};
-use dotenvy::dotenv;
-use routes::account_routes::account_routes;
-use routes::asset_routes::asset_routes;
-use routes::category_routes::category_routes;
-use routes::login_logout_routes::login_routes;
-use routes::recurring_transaction_routes::recurringtransaction_routes;
-use routes::transaction_routes::transaction_routes;
-use routes::user_routes::user_routes;
 use std::net::SocketAddr;
 use std::sync::Arc;
+
+use axum::{serve, Router};
+use dotenvy::dotenv;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
+
+use crate::models::Backend;
+
+use routes::{
+    account_routes::account_routes, asset_routes::asset_routes, category_routes::category_routes,
+    login_logout_routes::login_routes, recurring_transaction_routes::recurringtransaction_routes,
+    transaction_routes::transaction_routes, user_routes::user_routes,
+};
 
 #[tokio::main]
 async fn main() {

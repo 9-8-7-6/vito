@@ -1,4 +1,3 @@
-use crate::models::{Backend, Credentials};
 use axum::{
     extract::{Json, State},
     http::StatusCode,
@@ -8,6 +7,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
+
+use crate::models::{Backend, Credentials};
 
 pub async fn api_login(
     cookies: Cookies,

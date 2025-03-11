@@ -1,26 +1,23 @@
-use crate::models::Account;
 use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::models::Account;
+
 const QUERY_SELECT_ALL: &str = "SELECT * FROM accounts";
-
 const QUERY_SELECT_ONE: &str = "SELECT * FROM accounts WHERE id = $1";
-
 const QUERY_INSERT: &str = "
     INSERT INTO accounts (id, user_id, balance, created_at, updated_at) 
     VALUES ($1, $2, $3, $4, $5) 
     RETURNING *
 ";
-
 const QUERY_UPDATE: &str = "
     UPDATE accounts 
     SET balance = $1, updated_at = $2 
     WHERE id = $3 
     RETURNING *
 ";
-
 const QUERY_DELETE: &str = "DELETE FROM accounts WHERE id = $1";
 
 pub async fn get_accounts(pool: &PgPool) -> Result<Vec<Account>, sqlx::Error> {

@@ -1,5 +1,3 @@
-use crate::models::User;
-use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -9,6 +7,9 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::models::User;
+use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 
 pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
     let users = get_users(&pool).await.unwrap();

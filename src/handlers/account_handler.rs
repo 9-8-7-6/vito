@@ -1,7 +1,3 @@
-use crate::models::AccountList;
-use crate::repository::{
-    create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
-};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -13,6 +9,11 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::models::AccountList;
+use crate::repository::{
+    create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
+};
 
 pub async fn get_all_accounts_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_accounts(&pool).await {

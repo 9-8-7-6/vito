@@ -1,6 +1,7 @@
+use axum::{routing::post, Router};
+
 use crate::handlers::login_logout_handler::*;
 use crate::models::Backend;
-use axum::{routing::post, Router};
 
 pub fn login_routes(backend: Backend) -> Router {
     Router::new()

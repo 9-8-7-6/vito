@@ -1,9 +1,10 @@
-use crate::handlers::transaction_handler::*;
-use crate::models::Backend;
 use axum::{routing::get, Router};
 use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
+
+use crate::handlers::transaction_handler::*;
+use crate::models::Backend;
 
 pub fn transaction_routes(state: Arc<PgPool>) -> Router {
     Router::new()

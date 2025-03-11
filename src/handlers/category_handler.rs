@@ -1,5 +1,3 @@
-use crate::models::CategoryList;
-use crate::repository::*;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -10,6 +8,11 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::models::CategoryList;
+use crate::repository::{
+    create_category, delete_category, get_categories, get_category_by_id, update_category_info,
+};
 
 pub async fn get_all_categories_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_categories(&pool).await {

@@ -1,8 +1,3 @@
-use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
-use crate::repository::{
-    create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
-    get_recurring_transactions, update_recurring_transaction_info,
-};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -14,6 +9,12 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
+use crate::repository::{
+    create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
+    get_recurring_transactions, update_recurring_transaction_info,
+};
 
 pub async fn get_all_recurring_transactions_handler(
     State(pool): State<Arc<PgPool>>,

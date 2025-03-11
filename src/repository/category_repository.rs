@@ -1,24 +1,21 @@
-use crate::models::Category;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::models::Category;
+
 const QUERY_SELECT_ALL: &str = "SELECT * FROM categories";
-
 const QUERY_SELECT_ONE: &str = "SELECT * FROM categories WHERE id = $1";
-
 const QUERY_INSERT: &str = "
     INSERT INTO categories (id, name, category_type) 
     VALUES ($1, $2, $3) 
     RETURNING *
 ";
-
 const QUERY_UPDATE: &str = "
     UPDATE categories 
     SET name = $1, category_type = $2 
     WHERE id = $3 
     RETURNING *
 ";
-
 const QUERY_DELETE: &str = "DELETE FROM categories WHERE id = $1";
 
 pub async fn get_categories(pool: &PgPool) -> Result<Vec<Category>, sqlx::Error> {

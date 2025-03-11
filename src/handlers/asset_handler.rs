@@ -1,7 +1,3 @@
-use crate::models::AssetList;
-use crate::repository::{
-    create_asset, delete_asset, get_asset_by_id, get_assets, update_asset_info,
-};
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -13,6 +9,11 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
+
+use crate::models::AssetList;
+use crate::repository::{
+    create_asset, delete_asset, get_asset_by_id, get_assets, update_asset_info,
+};
 
 pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_assets(&pool).await {

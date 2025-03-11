@@ -1,14 +1,12 @@
-use crate::models::User;
 use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::models::User;
+
 const QUERY_SELECT_ALL: &str = "SELECT * FROM users";
-
 const QUERY_SELECT_ONE: &str = "SELECT * FROM users WHERE id = $1";
-
 const QUERY_SELECT_BY_USERNAME: &str = "SELECT * FROM users WHERE username = $1";
-
 const QUERY_INSERT: &str = "
     INSERT INTO users (
         id, username, first_name, last_name, email, date_joined, hashed_password, is_staff, is_active
@@ -17,7 +15,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-
 const QUERY_UPDATE: &str = "
     UPDATE users 
     SET 
@@ -30,7 +27,6 @@ const QUERY_UPDATE: &str = "
     WHERE id = $6 
     RETURNING *
 ";
-
 const QUERY_DELETE: &str = "DELETE FROM users WHERE id = $1";
 
 pub async fn get_users(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {

@@ -1,13 +1,12 @@
-use crate::models::{Transaction, TransactionType};
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use crate::models::{Transaction, TransactionType};
+
 const QUERY_SELECT_ALL: &str = "SELECT * FROM transactions";
-
 const QUERY_SELECT_ONE: &str = "SELECT * FROM transactions WHERE id = $1";
-
 const QUERY_INSERT: &str = "
     INSERT INTO transactions (
         id, from_asset_id, to_asset_id, category_id, transaction_type, 
@@ -20,7 +19,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-
 const QUERY_UPDATE: &str = "
     UPDATE transactions 
     SET 
@@ -39,7 +37,6 @@ const QUERY_UPDATE: &str = "
     WHERE id = $1
     RETURNING *
 ";
-
 const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
 
 pub async fn get_transactions(pool: &PgPool) -> Result<Vec<Transaction>, sqlx::Error> {
