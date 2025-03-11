@@ -26,16 +26,22 @@ use routes::{
     transaction_routes::transaction_routes, user_routes::user_routes,
 };
 
+struct Url {
+    database_url: String,
+    redis_url: String,
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    let urls = Url {
+        database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL not set"),
+        redis_url: std::env::var("REDIS_URL").expect("REDIS_URL not set"),
+    };
 
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL not set");
-
-    let state = Arc::new(db::init_db(&database_url).await);
-    let backend = Backend::new(&database_url).await.unwrap();
-    let session_layer = db::init_redis(&redis_url).await;
+    let state = Arc::new(db::init_db(&urls.database_url).await);
+    let backend = Backend::new(&urls.database_url).await.unwrap();
+    let session_layer = db::init_redis(&urls.redis_url).await;
 
     #[derive(OpenApi)]
     #[openapi(
