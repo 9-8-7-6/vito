@@ -7,6 +7,7 @@ use crate::models::User;
 const QUERY_SELECT_ALL: &str = "SELECT * FROM users";
 const QUERY_SELECT_ONE: &str = "SELECT * FROM users WHERE id = $1";
 const QUERY_SELECT_BY_USERNAME: &str = "SELECT * FROM users WHERE username = $1";
+const QUERY_SELECT_BY_EMAIL: &str = "SELECT * FROM users WHERE email = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO users (
         id, username, first_name, last_name, email, date_joined, hashed_password, is_staff, is_active
@@ -51,6 +52,15 @@ pub async fn get_user_by_username(
 ) -> Result<Option<User>, sqlx::Error> {
     let user = sqlx::query_as::<_, User>(QUERY_SELECT_BY_USERNAME)
         .bind(username)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(user)
+}
+
+pub async fn get_user_by_email(pool: &PgPool, email: &str) -> Result<Option<User>, sqlx::Error> {
+    let user = sqlx::query_as::<_, User>(QUERY_SELECT_BY_EMAIL)
+        .bind(email)
         .fetch_optional(pool)
         .await?;
 
