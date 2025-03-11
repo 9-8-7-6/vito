@@ -23,12 +23,13 @@ use routes::{
 #[tokio::main]
 async fn main() {
     dotenv().ok();
-    let state = Arc::new(db::init_db().await);
-    let backend = Backend::new(&std::env::var("DATABASE_URL").unwrap())
-        .await
-        .unwrap();
 
-    let session_layer = db::init_redis().await;
+    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
+    let redis_url = std::env::var("REDIS_URL").expect("REDIS_URL not set");
+
+    let state = Arc::new(db::init_db(&database_url).await);
+    let backend = Backend::new(&database_url).await.unwrap();
+    let session_layer = db::init_redis(&redis_url).await;
 
     let routes_all = Router::new()
         .merge(account_routes(state.clone()))

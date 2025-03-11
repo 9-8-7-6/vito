@@ -3,9 +3,7 @@ use time::Duration;
 use tower_sessions::{Expiry, SessionManagerLayer};
 use tower_sessions_redis_store::{fred::prelude::*, RedisStore};
 
-pub async fn init_db() -> PgPool {
-    let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL not set");
-
+pub async fn init_db(database_url: &str) -> PgPool {
     if !Postgres::database_exists(&database_url)
         .await
         .unwrap_or(false)
@@ -30,11 +28,10 @@ pub async fn init_db() -> PgPool {
     pool
 }
 
-pub async fn init_redis() -> SessionManagerLayer<RedisStore<Pool>> {
-    let database_url = std::env::var("REDIS_URL").expect("REDIS_URL not set");
-    let config = Config::from_url(&database_url).expect("Failed to parse Redis URL");
-    let pool = Pool::new(config, None, None, None, 6).expect("Failed to create Redis pool");
+pub async fn init_redis(redis_url: &str) -> SessionManagerLayer<RedisStore<Pool>> {
+    let config = Config::from_url(&redis_url).expect("Failed to parse Redis URL");
 
+    let pool = Pool::new(config, None, None, None, 6).expect("Failed to create Redis pool");
     pool.connect();
     pool.wait_for_connect()
         .await
