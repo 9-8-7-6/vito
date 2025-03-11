@@ -15,6 +15,19 @@ use crate::repository::{
     create_asset, delete_asset, get_asset_by_id, get_assets, update_asset_info,
 };
 
+#[derive(Deserialize)]
+pub struct CreateAssetRequest {
+    pub account_id: Uuid,
+    pub asset_type: String,
+    pub balance: Decimal,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateAssetRequest {
+    pub asset_type: String,
+    pub balance: Decimal,
+}
+
 pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_assets(&pool).await {
         Ok(assets) => AssetList(assets).into_response(),
@@ -32,13 +45,6 @@ pub async fn get_asset_handler(
     }
 }
 
-#[derive(Deserialize)]
-pub struct CreateAssetRequest {
-    pub account_id: Uuid,
-    pub asset_type: String,
-    pub balance: Decimal,
-}
-
 pub async fn add_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateAssetRequest>,
@@ -54,12 +60,6 @@ pub async fn add_asset_handler(
         Ok(asset) => asset.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
-}
-
-#[derive(Deserialize)]
-pub struct UpdateAssetRequest {
-    pub asset_type: String,
-    pub balance: Decimal,
 }
 
 pub async fn update_asset_handler(

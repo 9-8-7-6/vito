@@ -15,6 +15,17 @@ use crate::repository::{
     create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };
 
+#[derive(Deserialize)]
+pub struct CreateAccountRequest {
+    user_id: Uuid,
+    balance: Decimal,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateAccountRequest {
+    balance: Decimal,
+}
+
 pub async fn get_all_accounts_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_accounts(&pool).await {
         Ok(accounts) => AccountList(accounts).into_response(),
@@ -32,12 +43,6 @@ pub async fn get_account_handler(
     }
 }
 
-#[derive(Deserialize)]
-pub struct CreateAccountRequest {
-    user_id: Uuid,
-    balance: Decimal,
-}
-
 pub async fn add_account_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateAccountRequest>,
@@ -46,11 +51,6 @@ pub async fn add_account_handler(
         Ok(account) => account.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
-}
-
-#[derive(Deserialize)]
-pub struct UpdateAccountRequest {
-    balance: Decimal,
 }
 
 pub async fn update_account_handler(

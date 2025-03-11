@@ -16,6 +16,36 @@ use crate::repository::{
     update_transaction_info,
 };
 
+#[derive(Deserialize)]
+pub struct CreateTransactionRequest {
+    from_asset_id: Option<Uuid>,
+    to_asset_id: Option<Uuid>,
+    category_id: Option<Uuid>,
+    transaction_type: TransactionType,
+    amount: Decimal,
+    fee: Option<Decimal>,
+    from_account_id: Option<Uuid>,
+    to_account_id: Option<Uuid>,
+    transaction_time: Option<chrono::DateTime<chrono::Utc>>,
+    notes: Option<String>,
+    image: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateTransactionRequest {
+    from_asset_id: Option<Uuid>,
+    to_asset_id: Option<Uuid>,
+    category_id: Option<Uuid>,
+    transaction_type: Option<TransactionType>,
+    amount: Option<Decimal>,
+    fee: Option<Decimal>,
+    from_account_id: Option<Uuid>,
+    to_account_id: Option<Uuid>,
+    transaction_time: Option<chrono::DateTime<chrono::Utc>>,
+    notes: Option<String>,
+    image: Option<String>,
+}
+
 pub async fn get_all_transactions_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_transactions(&pool).await {
         Ok(transactions) => TransactionList(transactions).into_response(),
@@ -31,21 +61,6 @@ pub async fn get_transaction_handler(
         Ok(transaction) => transaction.into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
-}
-
-#[derive(Deserialize)]
-pub struct CreateTransactionRequest {
-    from_asset_id: Option<Uuid>,
-    to_asset_id: Option<Uuid>,
-    category_id: Option<Uuid>,
-    transaction_type: TransactionType,
-    amount: Decimal,
-    fee: Option<Decimal>,
-    from_account_id: Option<Uuid>,
-    to_account_id: Option<Uuid>,
-    transaction_time: Option<chrono::DateTime<chrono::Utc>>,
-    notes: Option<String>,
-    image: Option<String>,
 }
 
 pub async fn add_transaction_handler(
@@ -71,21 +86,6 @@ pub async fn add_transaction_handler(
         Ok(transaction) => transaction.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
-}
-
-#[derive(Deserialize)]
-pub struct UpdateTransactionRequest {
-    from_asset_id: Option<Uuid>,
-    to_asset_id: Option<Uuid>,
-    category_id: Option<Uuid>,
-    transaction_type: Option<TransactionType>,
-    amount: Option<Decimal>,
-    fee: Option<Decimal>,
-    from_account_id: Option<Uuid>,
-    to_account_id: Option<Uuid>,
-    transaction_time: Option<chrono::DateTime<chrono::Utc>>,
-    notes: Option<String>,
-    image: Option<String>,
 }
 
 pub async fn update_transaction_handler(

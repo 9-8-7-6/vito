@@ -16,6 +16,24 @@ use crate::repository::{
     get_recurring_transactions, update_recurring_transaction_info,
 };
 
+#[derive(Deserialize)]
+pub struct CreateRecurringTransactionRequest {
+    pub account_id: Uuid,
+    pub asset_id: Uuid,
+    pub category_id: Option<Uuid>,
+    pub amount: Decimal,
+    pub interval: IntervalChoices,
+    pub transaction_type: TransactionType,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateRecurringTransactionRequest {
+    pub amount: Option<Decimal>,
+    pub interval: Option<IntervalChoices>,
+    pub next_execution: Option<DateTime<Utc>>,
+    pub is_active: Option<bool>,
+}
+
 pub async fn get_all_recurring_transactions_handler(
     State(pool): State<Arc<PgPool>>,
 ) -> Json<Vec<RecurringTransaction>> {
@@ -31,16 +49,6 @@ pub async fn get_recurring_transaction_handler(
         .await
         .unwrap();
     Json(transaction)
-}
-
-#[derive(Deserialize)]
-pub struct CreateRecurringTransactionRequest {
-    pub account_id: Uuid,
-    pub asset_id: Uuid,
-    pub category_id: Option<Uuid>,
-    pub amount: Decimal,
-    pub interval: IntervalChoices,
-    pub transaction_type: TransactionType,
 }
 
 pub async fn add_recurring_transaction_handler(
@@ -64,14 +72,6 @@ pub async fn add_recurring_transaction_handler(
             Json(dummy_recurring_transaction()),
         ),
     }
-}
-
-#[derive(Deserialize)]
-pub struct UpdateRecurringTransactionRequest {
-    pub amount: Option<Decimal>,
-    pub interval: Option<IntervalChoices>,
-    pub next_execution: Option<DateTime<Utc>>,
-    pub is_active: Option<bool>,
 }
 
 pub async fn update_recurring_transaction_handler(

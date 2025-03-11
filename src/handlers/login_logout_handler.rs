@@ -18,6 +18,12 @@ pub struct RegisterPayload {
     email: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct LoginPayload {
+    username: String,
+    password: String,
+}
+
 pub async fn api_register(
     State(backend): State<Backend>,
     payload: Json<RegisterPayload>,
@@ -171,10 +177,4 @@ pub async fn api_delete_account(
         "status": "success",
         "message": "Account deleted successfully"
     })))
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LoginPayload {
-    username: String,
-    password: String,
 }

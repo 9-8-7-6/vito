@@ -11,6 +11,22 @@ use uuid::Uuid;
 use crate::models::User;
 use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 
+#[derive(Deserialize)]
+pub struct CreateuserRequest {
+    username: String,
+    email: String,
+    password: String,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateuserRequest {
+    pub username: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: Option<String>,
+    pub password: Option<String>,
+}
+
 pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
     let users = get_users(&pool).await.unwrap();
     Json(users)
@@ -27,13 +43,6 @@ pub async fn get_user_handler(
     }
 }
 
-#[derive(Deserialize)]
-pub struct CreateuserRequest {
-    username: String,
-    email: String,
-    password: String,
-}
-
 pub async fn add_user_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateuserRequest>,
@@ -47,15 +56,6 @@ pub async fn add_user_handler(
         Ok(user) => (StatusCode::CREATED, Json(user)),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
     }
-}
-
-#[derive(Deserialize)]
-pub struct UpdateuserRequest {
-    pub username: Option<String>,
-    pub first_name: Option<String>,
-    pub last_name: Option<String>,
-    pub email: Option<String>,
-    pub password: Option<String>,
 }
 
 pub async fn update_user_handler(

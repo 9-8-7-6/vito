@@ -14,6 +14,12 @@ use crate::repository::{
     create_category, delete_category, get_categories, get_category_by_id, update_category_info,
 };
 
+#[derive(Deserialize)]
+pub struct CategoryRequest {
+    pub name: String,
+    pub category_type: String,
+}
+
 pub async fn get_all_categories_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_categories(&pool).await {
         Ok(categories) => CategoryList(categories).into_response(),
@@ -31,15 +37,9 @@ pub async fn get_category_handler(
     }
 }
 
-#[derive(Deserialize)]
-pub struct CreateCategoryRequest {
-    pub name: String,
-    pub category_type: String,
-}
-
 pub async fn add_category_handler(
     State(pool): State<Arc<PgPool>>,
-    Json(payload): Json<CreateCategoryRequest>,
+    Json(payload): Json<CategoryRequest>,
 ) -> impl IntoResponse {
     match create_category(&pool, payload.name, payload.category_type).await {
         Ok(category) => category.into_response(),
@@ -47,16 +47,10 @@ pub async fn add_category_handler(
     }
 }
 
-#[derive(Deserialize)]
-pub struct UpdateCategoryRequest {
-    pub name: String,
-    pub category_type: String,
-}
-
 pub async fn update_category_handler(
     State(pool): State<Arc<PgPool>>,
     Path(category_id): Path<Uuid>,
-    Json(payload): Json<UpdateCategoryRequest>,
+    Json(payload): Json<CategoryRequest>,
 ) -> impl IntoResponse {
     match update_category_info(&pool, category_id, payload.name, payload.category_type).await {
         Ok(category) => category.into_response(),
