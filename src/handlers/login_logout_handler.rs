@@ -88,13 +88,13 @@ pub async fn api_login(
         Ok(Option::None) => {
             return Ok(Json(json!({
                 "status": "fail",
-                "message": "Invalid username or password"
+                "message": "Invalid account,please register first."
             })));
         }
         Err(_) => {
             return Ok(Json(json!({
                 "status": "fail",
-                "message": "Invalid username or password"
+                "message": "Something wrong happens, please check again."
             })));
         }
     };
