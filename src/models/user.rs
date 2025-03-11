@@ -11,7 +11,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::repository::{
-    create_user, get_user_by_email, get_user_by_id, get_user_by_username,
+    create_user, delete_user, get_user_by_email, get_user_by_id, get_user_by_username,
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
@@ -93,6 +93,10 @@ impl Backend {
         create_user(&self.db, &user.username, &user.email, &user.hashed_password)
             .await
             .map(|_| ())
+    }
+
+    pub async fn delete_user(&self, user_id: &Uuid) -> Result<(), sqlx::Error> {
+        delete_user(&self.db, user_id.clone()).await
     }
 }
 

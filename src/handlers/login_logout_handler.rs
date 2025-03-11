@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
+use uuid::Uuid;
 
 use crate::models::{Backend, Credentials, User};
 
@@ -139,6 +140,37 @@ pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     cookies.remove(cookie);
 
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
+}
+
+pub async fn api_delete_account(
+    session: Session,
+    cookies: Cookies,
+    State(backend): State<Backend>,
+) -> Result<Json<Value>, StatusCode> {
+    let user_id: Option<Uuid> = session.get("user_id").await.unwrap_or(None);
+    if user_id.is_none() {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
+
+    let user_id = user_id.unwrap();
+    backend
+        .delete_user(&user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    session.clear().await;
+    let cookie = Cookie::build(("session_id", ""))
+        .path("/")
+        .http_only(true)
+        .secure(true)
+        .max_age(time::Duration::seconds(-1))
+        .build();
+    cookies.remove(cookie);
+
+    Ok(Json(json!({
+        "status": "success",
+        "message": "Account deleted successfully"
+    })))
 }
 
 #[derive(Debug, Deserialize)]

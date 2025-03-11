@@ -8,5 +8,6 @@ pub fn login_routes(backend: Backend) -> Router {
         .route("/api/login", post(api_login))
         .route("/api/logout", post(api_logout))
         .route("/api/register", post(api_register))
+        .route("/api/delete_account", post(api_delete_account))
         .with_state(backend)
 }
