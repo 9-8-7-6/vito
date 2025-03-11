@@ -9,8 +9,10 @@ CREATE TABLE IF NOT EXISTS users (
     is_staff BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     date_joined TIMESTAMPTZ DEFAULT now(),
-    hashed_password VARCHAR(150)
+    hashed_password VARCHAR(255) NOT NULL
 );
+
+CREATE UNIQUE INDEX idx_users_email_lower ON users (LOWER(email));
 
 -- Create table accounts
 CREATE TABLE IF NOT EXISTS accounts (
