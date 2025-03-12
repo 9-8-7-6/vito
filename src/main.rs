@@ -8,6 +8,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use axum::{serve, Router};
+use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
@@ -42,6 +43,7 @@ async fn main() {
     let state = Arc::new(db::init_db(&urls.database_url).await);
     let backend = Backend::new(&urls.database_url).await.unwrap();
     let session_layer = db::init_redis(&urls.redis_url).await;
+    let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
     #[derive(OpenApi)]
     #[openapi(
@@ -76,6 +78,7 @@ async fn main() {
         .merge(transaction_routes(state.clone()))
         .merge(login_routes(backend.clone()))
         .layer(CookieManagerLayer::new())
+        .layer(auth_layer)
         .layer(session_layer);
 
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
