@@ -10,8 +10,11 @@ use std::sync::Arc;
 use axum::{serve, Router};
 use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
+use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http::Method;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
+use tower_http::cors::{Any, CorsLayer};
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     Modify, OpenApi,
@@ -48,6 +51,11 @@ async fn main() {
     let session_layer = db::init_redis(&urls.redis_url).await;
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
+    let cors = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_origin(Any)
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION]);
+
     #[derive(OpenApi)]
     #[openapi(
         modifiers(&SecurityAddon),
@@ -80,6 +88,7 @@ async fn main() {
         .merge(recurringtransaction_routes(state.clone()))
         .merge(transaction_routes(state.clone()))
         .merge(login_routes(backend.clone()))
+        .layer(cors)
         .layer(CookieManagerLayer::new())
         .layer(auth_layer)
         .layer(session_layer);
