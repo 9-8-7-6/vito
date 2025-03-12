@@ -41,7 +41,10 @@ async fn main() {
     };
 
     let state = Arc::new(db::init_db(&urls.database_url).await);
-    let backend = Backend::new(&urls.database_url).await.unwrap();
+    let backend = Backend::new(&urls.database_url)
+        .await
+        .expect("Failed to initialize Backend: Check DATABASE_URL");
+
     let session_layer = db::init_redis(&urls.redis_url).await;
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
