@@ -178,3 +178,19 @@ pub async fn api_delete_account(
         "message": "Account deleted successfully"
     })))
 }
+
+pub async fn check_session(
+    State(backend): State<Backend>,
+    session: Session,
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let is_valid = backend.is_session_valid(&session).await.unwrap_or(false);
+
+    if is_valid {
+        return Ok(Json(json!({
+            "status": "success",
+            "message": "Session is valid"
+        })));
+    }
+
+    Err(StatusCode::UNAUTHORIZED)
+}

@@ -8,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
 use std::sync::Arc;
+use tower_sessions::session::Session;
 use uuid::Uuid;
 
 use crate::repository::{
@@ -97,6 +98,21 @@ impl Backend {
 
     pub async fn delete_user(&self, user_id: &Uuid) -> Result<(), sqlx::Error> {
         delete_user(&self.db, user_id.clone()).await
+    }
+
+    pub async fn is_session_valid(
+        &self,
+        session: &Session,
+    ) -> Result<bool, tower_sessions::session::Error> {
+        let user_id: Option<String> = session.get("user_id").await?;
+
+        if let Some(user_id) = user_id {
+            if let Ok(uuid) = Uuid::parse_str(&user_id) {
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 }
 

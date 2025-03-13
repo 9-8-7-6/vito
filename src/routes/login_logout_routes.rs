@@ -11,5 +11,6 @@ pub fn login_routes(backend: Backend) -> Router {
         .route_layer(login_required!(Backend, login_url = "/login"))
         .route("/api/login", post(api_login))
         .route("/api/register", post(api_register))
+        .route("/api/auth/check", post(check_session))
         .with_state(backend)
 }
