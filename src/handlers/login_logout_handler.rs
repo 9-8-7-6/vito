@@ -126,7 +126,7 @@ pub async fn api_login(
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
     let session_cookie = Cookie::build(("id", session_id))
         .path("/")
-        .http_only(true)
+        .http_only(false)
         .build();
     cookies.add(session_cookie);
 
@@ -146,7 +146,7 @@ pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
 
     let cookie = Cookie::build(("session_id", ""))
         .path("/")
-        .http_only(true)
+        .http_only(false)
         .max_age(time::Duration::seconds(-1))
         .build();
     cookies.remove(cookie);
@@ -173,7 +173,7 @@ pub async fn api_delete_account(
     session.clear().await;
     let cookie = Cookie::build(("session_id", ""))
         .path("/")
-        .http_only(true)
+        .http_only(false)
         .secure(true)
         .max_age(time::Duration::seconds(-1))
         .build();
