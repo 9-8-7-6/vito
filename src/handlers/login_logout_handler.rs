@@ -105,8 +105,14 @@ pub async fn api_login(
         }
     };
 
-    let insert_user_id = session.insert("user_id", user.id.to_string()).await;
-    let insert_username = session.insert("username", user.username.clone()).await;
+    let insert_user_id = session
+        .insert("user_id", user.id.to_string())
+        .await
+        .expect("Inserting user_id into Session fail");
+    let insert_username = session
+        .insert("username", user.username.clone())
+        .await
+        .expect("Inserting username into Session fail");
 
     println!(
         "Session insert user_id {} result: {:?}",
@@ -116,10 +122,6 @@ pub async fn api_login(
         "Session insert username {} result: {:?}",
         user.username, insert_username
     );
-
-    if insert_user_id.is_err() || insert_username.is_err() {
-        return Err(StatusCode::INTERNAL_SERVER_ERROR);
-    }
 
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
     let session_cookie = Cookie::build(("session_id", session_id.clone()))
