@@ -9,7 +9,7 @@ use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
 use uuid::Uuid;
 
-use crate::models::{Backend, Credentials, User};
+use crate::models::{user, Backend, Credentials, User};
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterPayload {
@@ -105,24 +105,30 @@ pub async fn api_login(
         }
     };
 
-    if session
-        .insert("user_id", user.id.to_string())
-        .await
-        .is_err()
-        || session
-            .insert("username", user.username.clone())
-            .await
-            .is_err()
-    {
+    let insert_user_id = session.insert("user_id", user.id.to_string()).await;
+    let insert_username = session.insert("username", user.username.clone()).await;
+
+    println!(
+        "Session insert user_id {} result: {:?}",
+        user.id, insert_user_id
+    );
+    println!(
+        "Session insert username {} result: {:?}",
+        user.username, insert_username
+    );
+
+    if insert_user_id.is_err() || insert_username.is_err() {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
 
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
-    let session_cookie = Cookie::build(("session_id", session_id))
+    let session_cookie = Cookie::build(("session_id", session_id.clone()))
         .path("/")
         .http_only(true)
         .build();
     cookies.add(session_cookie);
+
+    println!("Generated session_id: {:?}", session_id);
 
     Ok(Json(json!({
         "status": "success",
