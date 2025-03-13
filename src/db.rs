@@ -42,7 +42,7 @@ pub async fn init_redis(redis_url: &str) -> SessionManagerLayer<RedisStore<Pool>
     let session_store = RedisStore::new(pool);
     let session_layer: SessionManagerLayer<RedisStore<_>> = SessionManagerLayer::new(session_store)
         .with_secure(false)
-        .with_expiry(Expiry::OnInactivity(Duration::seconds(10)));
+        .with_expiry(Expiry::OnInactivity(Duration::days(7)));
 
     session_layer
 }
