@@ -33,11 +33,11 @@ pub async fn init_redis(redis_url: &str) -> SessionManagerLayer<RedisStore<Pool>
 
     let pool = Pool::new(config, None, None, None, 6).expect("Failed to create Redis pool");
     let redis_conn = pool.connect();
-    println!("Redis connection result: {:?}", redis_conn);
 
-    pool.wait_for_connect()
-        .await
-        .expect("Failed to connect to Redis");
+    match pool.wait_for_connect().await {
+        Ok(_) => println!("✅ Redis connected successfully, Result {:?}!", redis_conn),
+        Err(e) => panic!("❌ Failed to connect to Redis: {:?}", e),
+    }
 
     let session_store = RedisStore::new(pool);
     let session_layer: SessionManagerLayer<RedisStore<_>> = SessionManagerLayer::new(session_store)
