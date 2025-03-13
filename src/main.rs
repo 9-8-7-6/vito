@@ -11,10 +11,10 @@ use axum::{serve, Router};
 use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
-use http::Method;
+use http::{HeaderValue, Method};
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     Modify, OpenApi,
@@ -53,8 +53,9 @@ async fn main() {
 
     let cors = CorsLayer::new()
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-        .allow_origin(Any)
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION]);
+        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_credentials(true);
 
     #[derive(OpenApi)]
     #[openapi(
