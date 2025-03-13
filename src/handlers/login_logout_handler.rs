@@ -124,13 +124,11 @@ pub async fn api_login(
     );
 
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
-    let session_cookie = Cookie::build(("session_id", session_id.clone()))
+    let session_cookie = Cookie::build(("id", session_id))
         .path("/")
         .http_only(true)
         .build();
     cookies.add(session_cookie);
-
-    println!("Generated session_id: {:?}", session_id);
 
     Ok(Json(json!({
         "status": "success",
