@@ -139,9 +139,14 @@ pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     let cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(false)
-        .max_age(time::Duration::seconds(-1))
+        .max_age(time::Duration::seconds(0))
         .build();
-    session.delete().await.expect("Failed to delete session in redis");
+
+    session
+        .delete()
+        .await
+        .expect("Failed to delete session in redis");
+
     cookies.remove(cookie);
 
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
