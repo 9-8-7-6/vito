@@ -105,10 +105,16 @@ pub async fn api_login(
         }
     };
 
+    let user_data = json!({
+        "id": user.id,
+        "username": user.username,
+        "email": user.email
+    })
+    .to_string();
     session
-        .insert("user_id", user.id.to_string())
+        .insert("user_id", user_data)
         .await
-        .expect("Inserting user_id into Session fail");
+        .expect(&format!("Failed to insert user {} session", user.id));
 
     println!(
         "Insert session {:?} into redis",
