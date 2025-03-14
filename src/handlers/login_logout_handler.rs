@@ -144,7 +144,7 @@ pub async fn api_login(
 pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     session.clear().await;
 
-    let cookie = Cookie::build(("session_id", ""))
+    let cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(false)
         .max_age(time::Duration::seconds(-1))
@@ -171,7 +171,7 @@ pub async fn api_delete_account(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
     session.clear().await;
-    let cookie = Cookie::build(("session_id", ""))
+    let cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(false)
         .secure(true)
