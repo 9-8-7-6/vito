@@ -105,22 +105,14 @@ pub async fn api_login(
         }
     };
 
-    let insert_user_id = session
+    session
         .insert("user_id", user.id.to_string())
         .await
         .expect("Inserting user_id into Session fail");
-    let insert_username = session
-        .insert("username", user.username.clone())
-        .await
-        .expect("Inserting username into Session fail");
 
     println!(
-        "Session insert user_id {} result: {:?}",
-        user.id, insert_user_id
-    );
-    println!(
-        "Session insert username {} result: {:?}",
-        user.username, insert_username
+        "Insert session {:?} into redis",
+        session.get::<String>("user_id").await
     );
 
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
