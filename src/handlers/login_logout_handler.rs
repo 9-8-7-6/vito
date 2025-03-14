@@ -105,14 +105,8 @@ pub async fn api_login(
         }
     };
 
-    let user_data = json!({
-        "id": user.id,
-        "username": user.username,
-        "email": user.email
-    })
-    .to_string();
     session
-        .insert("user_id", user_data)
+        .insert("user_id", user.id.to_string())
         .await
         .expect(&format!("Failed to insert user {} session", user.id));
 
@@ -172,7 +166,6 @@ pub async fn api_delete_account(
     let cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(false)
-        .secure(true)
         .max_age(time::Duration::seconds(-1))
         .build();
     cookies.remove(cookie);
