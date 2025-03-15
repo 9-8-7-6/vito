@@ -18,6 +18,6 @@ pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
                 .put(update_recurring_transaction_handler)
                 .delete(delete_recurring_transaction_handler),
         )
-        .route_layer(login_required!(Backend, login_url = "/login"))
+        // .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }

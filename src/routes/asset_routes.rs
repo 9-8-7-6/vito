@@ -18,6 +18,6 @@ pub fn asset_routes(state: Arc<PgPool>) -> Router {
                 .put(update_asset_handler)
                 .delete(delete_asset_handler),
         )
-        .route_layer(login_required!(Backend, login_url = "/login"))
+        // .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }

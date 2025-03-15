@@ -18,6 +18,6 @@ pub fn account_routes(state: Arc<PgPool>) -> Router {
                 .put(update_account_handler)
                 .delete(delete_account_handler),
         )
-        .route_layer(login_required!(Backend, login_url = "/login"))
+        // .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }

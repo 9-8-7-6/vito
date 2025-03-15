@@ -22,6 +22,6 @@ pub fn transaction_routes(state: Arc<PgPool>) -> Router {
             "/protected",
             get(|| async { "Gotta be logged in to see me!" }),
         )
-        .route_layer(login_required!(Backend, login_url = "/login"))
+        // .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }
