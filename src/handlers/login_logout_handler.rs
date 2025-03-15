@@ -72,6 +72,11 @@ pub async fn api_register(
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    backend
+        .create_account_(&new_user)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
     Ok(Json(json!({
         "status": "success",
         "message": "User registered successfully"
