@@ -13,6 +13,7 @@ use crate::repository::{create_user, delete_user, get_user_by_id, get_users, upd
 
 #[derive(Deserialize)]
 pub struct CreateuserRequest {
+    user_id: Uuid,
     username: String,
     email: String,
     password: String,
@@ -52,7 +53,15 @@ pub async fn add_user_handler(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
     };
 
-    match create_user(&pool, &payload.username, &payload.email, &hashed_password).await {
+    match create_user(
+        &pool,
+        &payload.user_id,
+        &payload.username,
+        &payload.email,
+        &hashed_password,
+    )
+    .await
+    {
         Ok(user) => (StatusCode::CREATED, Json(user)),
         Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
     }

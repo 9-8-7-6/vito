@@ -5,6 +5,7 @@ use argon2::{
 use async_trait::async_trait;
 use axum_login::{AuthUser, AuthnBackend, UserId};
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, FromRow, PgPool};
 use std::sync::Arc;
@@ -12,7 +13,8 @@ use tower_sessions::session::Session;
 use uuid::Uuid;
 
 use crate::repository::{
-    create_user, delete_user, get_user_by_email, get_user_by_id, get_user_by_username,
+    create_account, create_user, delete_user, get_user_by_email, get_user_by_id,
+    get_user_by_username,
 };
 
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
@@ -91,7 +93,19 @@ impl Backend {
     }
 
     pub async fn create_user_(&self, user: &User) -> Result<(), sqlx::Error> {
-        create_user(&self.db, &user.username, &user.email, &user.hashed_password)
+        create_user(
+            &self.db,
+            &user.id,
+            &user.username,
+            &user.email,
+            &user.hashed_password,
+        )
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn create_account_(&self, user: &User) -> Result<(), sqlx::Error> {
+        create_account(&self.db, user.id.clone(), Decimal::new(0, 2))
             .await
             .map(|_| ())
     }

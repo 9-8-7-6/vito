@@ -69,12 +69,13 @@ pub async fn get_user_by_email(pool: &PgPool, email: &str) -> Result<Option<User
 
 pub async fn create_user(
     pool: &PgPool,
+    user_id: &Uuid,
     username: &str,
     email: &str,
     hashed_password: &str,
 ) -> Result<User, sqlx::Error> {
     let user = sqlx::query_as::<_, User>(QUERY_INSERT)
-        .bind(Uuid::new_v4())
+        .bind(user_id)
         .bind(username)
         .bind(email)
         .bind(Utc::now())
