@@ -40,7 +40,7 @@ pub async fn get_asset_handler(
     Path(asset_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match get_asset_by_user_id(&pool, asset_id).await {
-        Ok(asset) => asset.into_response(),
+        Ok(asset) => AssetList(asset).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }

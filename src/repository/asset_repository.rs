@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::models::Asset;
 
 const QUERY_SELECT_ALL: &str = "SELECT * FROM assets";
-const QUERY_SELECT_ONE: &str = "SELECT * FROM assets WHERE id = $1";
+const QUERY_SELECT_BY_USER_ID: &str = "SELECT * FROM assets WHERE account_id = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO assets (id, account_id, asset_type, balance, created_at, updated_at) 
     VALUES ($1, $2, $3, $4, $5, $6) 
@@ -26,10 +26,10 @@ pub async fn get_assets(pool: &PgPool) -> Result<Vec<Asset>, sqlx::Error> {
         .await
 }
 
-pub async fn get_asset_by_user_id(pool: &PgPool, asset_id: Uuid) -> Result<Asset, sqlx::Error> {
-    sqlx::query_as::<_, Asset>(QUERY_SELECT_ONE)
-        .bind(asset_id)
-        .fetch_one(pool)
+pub async fn get_asset_by_user_id(pool: &PgPool, user_id: Uuid) -> Result<Vec<Asset>, sqlx::Error> {
+    sqlx::query_as::<_, Asset>(QUERY_SELECT_BY_USER_ID)
+        .bind(user_id)
+        .fetch_all(pool)
         .await
 }
 
