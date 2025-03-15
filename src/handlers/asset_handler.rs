@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::models::AssetList;
 use crate::repository::{
-    create_asset, delete_asset, get_asset_by_id, get_assets, update_asset_info,
+    create_asset, delete_asset, get_asset_by_user_id, get_assets, update_asset_info,
 };
 
 #[derive(Deserialize)]
@@ -39,7 +39,7 @@ pub async fn get_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(asset_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match get_asset_by_id(&pool, asset_id).await {
+    match get_asset_by_user_id(&pool, asset_id).await {
         Ok(asset) => asset.into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }

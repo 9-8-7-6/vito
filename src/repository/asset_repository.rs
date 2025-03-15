@@ -26,7 +26,7 @@ pub async fn get_assets(pool: &PgPool) -> Result<Vec<Asset>, sqlx::Error> {
         .await
 }
 
-pub async fn get_asset_by_id(pool: &PgPool, asset_id: Uuid) -> Result<Asset, sqlx::Error> {
+pub async fn get_asset_by_user_id(pool: &PgPool, asset_id: Uuid) -> Result<Asset, sqlx::Error> {
     sqlx::query_as::<_, Asset>(QUERY_SELECT_ONE)
         .bind(asset_id)
         .fetch_one(pool)

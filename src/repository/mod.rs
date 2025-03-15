@@ -9,7 +9,7 @@ pub use account_repository::{
     create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };
 pub use asset_repository::{
-    create_asset, delete_asset, get_asset_by_id, get_assets, update_asset_info,
+    create_asset, delete_asset, get_asset_by_user_id, get_assets, update_asset_info,
 };
 pub use category_repository::{
     create_category, delete_category, get_categories, get_category_by_id, update_category_info,
