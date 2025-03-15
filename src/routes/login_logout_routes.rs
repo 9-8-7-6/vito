@@ -9,12 +9,12 @@ use crate::models::Backend;
 
 pub fn login_routes(backend: Backend) -> Router {
     Router::new()
-        .route("/api/logout", post(api_logout))
-        .route("/api/logout", options(api_logout))
-        .route("/api/delete_account", post(api_delete_account))
+        .route("/logout", post(api_logout))
+        .route("/logout", options(api_logout))
+        .route("/delete_account", post(api_delete_account))
         // .route_layer(login_required!(Backend, login_url = "/login"))
-        .route("/api/login", post(api_login))
-        .route("/api/register", post(api_register))
-        .route("/api/auth/check", post(check_session))
+        .route("/login", post(api_login))
+        .route("/register", post(api_register))
+        .route("/auth/check", post(check_session))
         .with_state(backend)
 }
