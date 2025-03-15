@@ -16,8 +16,7 @@ CREATE UNIQUE INDEX idx_users_email_lower ON users (LOWER(email));
 
 -- Create table accounts
 CREATE TABLE IF NOT EXISTS accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    account_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     balance DECIMAL(12,2) DEFAULT 0.00 NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()

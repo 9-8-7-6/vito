@@ -2,7 +2,7 @@
 -- Create RecurringTransaction table
 CREATE TABLE IF NOT EXISTS recurring_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    account_id UUID NOT NULL REFERENCES accounts ON DELETE CASCADE,
     asset_id UUID NOT NULL REFERENCES assets(id) ON DELETE CASCADE,
     category_id UUID NULL REFERENCES categories(id) ON DELETE SET NULL,
     amount DECIMAL(12,2) NOT NULL CHECK (amount >= 0.01),

@@ -6,19 +6,19 @@ use uuid::Uuid;
 use crate::models::Account;
 
 const QUERY_SELECT_ALL: &str = "SELECT * FROM accounts";
-const QUERY_SELECT_ONE: &str = "SELECT * FROM accounts WHERE id = $1";
+const QUERY_SELECT_ONE: &str = "SELECT * FROM accounts WHERE account_id = $1";
 const QUERY_INSERT: &str = "
-    INSERT INTO accounts (id, user_id, balance, created_at, updated_at) 
-    VALUES ($1, $2, $3, $4, $5) 
+    INSERT INTO accounts (account_id, balance, created_at, updated_at) 
+    VALUES ($1, $2, $3, $4) 
     RETURNING *
 ";
 const QUERY_UPDATE: &str = "
     UPDATE accounts 
     SET balance = $1, updated_at = $2 
-    WHERE id = $3 
+    WHERE account_id = $3 
     RETURNING *
 ";
-const QUERY_DELETE: &str = "DELETE FROM accounts WHERE id = $1";
+const QUERY_DELETE: &str = "DELETE FROM accounts WHERE account_id = $1";
 
 pub async fn get_accounts(pool: &PgPool) -> Result<Vec<Account>, sqlx::Error> {
     sqlx::query_as::<_, Account>(QUERY_SELECT_ALL)
@@ -39,7 +39,6 @@ pub async fn create_account(
     balance: Decimal,
 ) -> Result<Account, sqlx::Error> {
     sqlx::query_as::<_, Account>(QUERY_INSERT)
-        .bind(Uuid::new_v4())
         .bind(user_id)
         .bind(balance)
         .bind(Utc::now())

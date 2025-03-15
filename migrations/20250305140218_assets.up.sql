@@ -2,7 +2,7 @@
 -- Create table assets
 CREATE TABLE IF NOT EXISTS assets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    account_id UUID NOT NULL REFERENCES accounts ON DELETE CASCADE,
     asset_type VARCHAR(150) NOT NULL,
     balance DECIMAL(12,2) DEFAULT 0.00 NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
