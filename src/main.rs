@@ -52,7 +52,13 @@ async fn main() {
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
     let cors = CorsLayer::new()
-        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::OPTIONS,
+            Method::DELETE,
+            Method::PUT,
+        ])
         .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true);
