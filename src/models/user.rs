@@ -105,9 +105,10 @@ impl Backend {
     }
 
     pub async fn create_account_(&self, user: &User) -> Result<(), sqlx::Error> {
-        create_account(&self.db, user.id.clone(), Decimal::new(0, 2))
-            .await
-            .map(|_| ())
+        match create_account(&self.db, user.id.clone(), Decimal::new(0, 2)).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e),
+        }
     }
 
     pub async fn delete_user(&self, user_id: &Uuid) -> Result<(), sqlx::Error> {
