@@ -4,7 +4,6 @@ CREATE TABLE transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_asset_id UUID NULL REFERENCES assets(id) ON DELETE CASCADE,
     to_asset_id UUID NULL REFERENCES assets(id) ON DELETE CASCADE,
-    category_id UUID NULL REFERENCES categories(id) ON DELETE SET NULL,
     transaction_type INTEGER NOT NULL CHECK (transaction_type BETWEEN 1 AND 4),
     amount DECIMAL(12,2) NOT NULL,
     fee DECIMAL(12,2) NOT NULL DEFAULT 0.00,

@@ -20,7 +20,6 @@ use crate::repository::{
 pub struct CreateRecurringTransactionRequest {
     pub account_id: Uuid,
     pub asset_id: Uuid,
-    pub category_id: Option<Uuid>,
     pub amount: Decimal,
     pub interval: IntervalChoices,
     pub transaction_type: TransactionType,
@@ -59,7 +58,6 @@ pub async fn add_recurring_transaction_handler(
         &pool,
         payload.account_id,
         payload.asset_id,
-        payload.category_id,
         payload.amount,
         payload.interval,
         payload.transaction_type,
@@ -112,7 +110,6 @@ fn dummy_recurring_transaction() -> RecurringTransaction {
         id: Uuid::nil(),
         account_id: Uuid::nil(),
         asset_id: Uuid::nil(),
-        category_id: None,
         amount: Decimal::ZERO,
         interval: IntervalChoices::Daily,
         next_execution: Utc::now(),

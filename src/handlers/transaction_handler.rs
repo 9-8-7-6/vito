@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::models::{Transaction, TransactionList, TransactionType};
 use crate::repository::{
-    create_transaction, delete_transaction, get_transaction_by_id, get_transactions,
+    create_transaction, delete_transaction, get_transaction_by_user_id, get_transactions,
     update_transaction_info,
 };
 
@@ -20,7 +20,6 @@ use crate::repository::{
 pub struct CreateTransactionRequest {
     from_asset_id: Option<Uuid>,
     to_asset_id: Option<Uuid>,
-    category_id: Option<Uuid>,
     transaction_type: TransactionType,
     amount: Decimal,
     fee: Option<Decimal>,
@@ -35,7 +34,6 @@ pub struct CreateTransactionRequest {
 pub struct UpdateTransactionRequest {
     from_asset_id: Option<Uuid>,
     to_asset_id: Option<Uuid>,
-    category_id: Option<Uuid>,
     transaction_type: Option<TransactionType>,
     amount: Option<Decimal>,
     fee: Option<Decimal>,
@@ -57,8 +55,8 @@ pub async fn get_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match get_transaction_by_id(&pool, transaction_id).await {
-        Ok(transaction) => transaction.into_response(),
+    match get_transaction_by_user_id(&pool, transaction_id).await {
+        Ok(transaction) => TransactionList(transaction).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }
@@ -71,7 +69,6 @@ pub async fn add_transaction_handler(
         &pool,
         payload.from_asset_id,
         payload.to_asset_id,
-        payload.category_id,
         payload.transaction_type,
         payload.amount,
         payload.fee,
@@ -98,7 +95,6 @@ pub async fn update_transaction_handler(
         transaction_id,
         payload.from_asset_id,
         payload.to_asset_id,
-        payload.category_id,
         payload.transaction_type,
         payload.amount,
         payload.fee,

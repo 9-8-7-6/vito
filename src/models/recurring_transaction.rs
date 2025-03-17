@@ -36,7 +36,6 @@ pub struct RecurringTransaction {
     pub id: Uuid,
     pub account_id: Uuid,
     pub asset_id: Uuid,
-    pub category_id: Option<Uuid>,
     pub amount: Decimal,
     pub interval: IntervalChoices,
     pub next_execution: DateTime<Utc>,

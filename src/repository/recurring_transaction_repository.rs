@@ -9,10 +9,10 @@ const QUERY_SELECT_ALL: &str = "SELECT * FROM recurring_transactions";
 const QUERY_SELECT_ONE: &str = "SELECT * FROM recurring_transactions WHERE id = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO recurring_transactions (
-        id, account_id, asset_id, category_id, amount, interval, 
+        id, account_id, asset_id,  amount, interval, 
         next_execution, transaction_type, is_active, created_at, updated_at
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, true, $9, $10
+        $1, $2, $3, $4, $5, $6, $7, true, $9, $8
     ) 
     RETURNING *
 ";
@@ -53,7 +53,6 @@ pub async fn create_recurring_transaction(
     pool: &PgPool,
     account_id: Uuid,
     asset_id: Uuid,
-    category_id: Option<Uuid>,
     amount: Decimal,
     interval: IntervalChoices,
     transaction_type: TransactionType,
@@ -62,7 +61,6 @@ pub async fn create_recurring_transaction(
         .bind(Uuid::new_v4())
         .bind(account_id)
         .bind(asset_id)
-        .bind(category_id)
         .bind(amount)
         .bind(interval)
         .bind(Utc::now())
