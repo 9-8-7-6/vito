@@ -117,16 +117,16 @@ impl Backend {
     pub async fn is_session_valid(
         &self,
         session: &Session,
-    ) -> Result<bool, tower_sessions::session::Error> {
+    ) -> Result<(bool, String), tower_sessions::session::Error> {
         let user_id: Option<String> = session.get("user_id").await?;
 
         if let Some(user_id) = user_id {
             if let Ok(uuid) = Uuid::parse_str(&user_id) {
-                return Ok(true);
+                return Ok((true, user_id));
             }
         }
 
-        Ok(false)
+        Ok((false, "".to_string()))
     }
 }
 
