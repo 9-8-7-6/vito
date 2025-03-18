@@ -5,9 +5,9 @@ use uuid::Uuid;
 
 use crate::models::{Transaction, TransactionType};
 
-const QUERY_SELECT_ALL: &str = "SELECT * FROM transactions";
-const QUERY_SELECT_BY_USER_ID: &str =
+const QUERY_SELECT_BY_ACCOUNT_ID: &str =
     "SELECT * FROM transactions WHERE from_account_id = $1 OR to_account_id = $1";
+const QUERY_SELECT_BY_TRANSACTION_ID: &str = "SELECT * FROM transactions WHERE id = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO transactions (
         from_asset_id, to_asset_id, transaction_type, 
@@ -38,20 +38,23 @@ const QUERY_UPDATE: &str = "
 ";
 const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
 
-pub async fn get_transactions(pool: &PgPool) -> Result<Vec<Transaction>, sqlx::Error> {
-    let transactions = sqlx::query_as::<_, Transaction>(QUERY_SELECT_ALL)
-        .fetch_all(pool)
-        .await?;
-    Ok(transactions)
-}
-
-pub async fn get_transaction_by_user_id(
+pub async fn get_transactions_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
 ) -> Result<Vec<Transaction>, sqlx::Error> {
-    sqlx::query_as::<_, Transaction>(QUERY_SELECT_BY_USER_ID)
+    sqlx::query_as::<_, Transaction>(QUERY_SELECT_BY_ACCOUNT_ID)
         .bind(account_id)
         .fetch_all(pool)
+        .await
+}
+
+pub async fn get_transaction_by_transation_id(
+    pool: &PgPool,
+    transaction_id: Uuid,
+) -> Result<Transaction, sqlx::Error> {
+    sqlx::query_as::<_, Transaction>(QUERY_SELECT_BY_TRANSACTION_ID)
+        .bind(transaction_id)
+        .fetch_one(pool)
         .await
 }
 

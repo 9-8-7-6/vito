@@ -12,8 +12,8 @@ use uuid::Uuid;
 
 use crate::models::{Transaction, TransactionList, TransactionType};
 use crate::repository::{
-    create_transaction, delete_transaction, get_transaction_by_user_id, get_transactions,
-    update_transaction_info,
+    create_transaction, delete_transaction, get_transaction_by_transation_id,
+    get_transactions_by_account_id, update_transaction_info,
 };
 
 #[derive(Deserialize)]
@@ -44,18 +44,21 @@ pub struct UpdateTransactionRequest {
     image: Option<String>,
 }
 
-pub async fn get_all_transactions_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
-    match get_transactions(&pool).await {
-        Ok(transactions) => TransactionList(transactions).into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
-}
-
-pub async fn get_transaction_handler(
+pub async fn get_transaction_by_transaction_id_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match get_transaction_by_user_id(&pool, transaction_id).await {
+    match get_transaction_by_transation_id(&pool, transaction_id).await {
+        Ok(transaction) => transaction.into_response(),
+        Err(_) => StatusCode::NOT_FOUND.into_response(),
+    }
+}
+
+pub async fn get_transaction_by_account_id_handler(
+    State(pool): State<Arc<PgPool>>,
+    Path(account_id): Path<Uuid>,
+) -> impl IntoResponse {
+    match get_transactions_by_account_id(&pool, account_id).await {
         Ok(transaction) => TransactionList(transaction).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }

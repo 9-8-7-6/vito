@@ -15,8 +15,8 @@ pub use recurring_transaction_repository::{
     get_recurring_transactions, update_recurring_transaction_info,
 };
 pub use transaction_repository::{
-    create_transaction, delete_transaction, get_transaction_by_user_id, get_transactions,
-    update_transaction_info,
+    create_transaction, delete_transaction, get_transaction_by_transation_id,
+    get_transactions_by_account_id, update_transaction_info,
 };
 pub use user_repository::{
     create_user, delete_user, get_user_by_email, get_user_by_id, get_user_by_username, get_users,
