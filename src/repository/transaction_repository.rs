@@ -11,12 +11,11 @@ const QUERY_SELECT_BY_USER_ID: &str =
 const QUERY_INSERT: &str = "
     INSERT INTO transactions (
         from_asset_id, to_asset_id, transaction_type, 
-        amount, fee, from_account_id, to_account_id, created_at, 
-        updated_at, transaction_time, notes, image
+        amount, fee, from_account_id, to_account_id, 
+        created_at, updated_at, transaction_time, notes, image
     ) VALUES (
-        $1, $2, $3, $4, $5, 
-        COALESCE($6, 0.00), $7, $8, COALESCE($9, now()), 
-        COALESCE($10, now()), COALESCE($11, now()), $12
+        $1, $2, $3, $4, $5, $6, $7, 
+        $8, $9, $10, $11, $12
     ) 
     RETURNING *
 ";
@@ -69,8 +68,19 @@ pub async fn create_transaction(
     notes: Option<String>,
     image: Option<String>,
 ) -> Result<Transaction, sqlx::Error> {
-    let transaction = sqlx::query_as::<_, Transaction>(QUERY_INSERT)
-        .bind(Uuid::new_v4())
+    println!("Starting create_transaction...");
+    println!("from_asset_id: {:?}", from_asset_id);
+    println!("to_asset_id: {:?}", to_asset_id);
+    println!("transaction_type: {:?}", transaction_type);
+    println!("amount: {:?}", amount);
+    println!("fee: {:?}", fee);
+    println!("from_account_id: {:?}", from_account_id);
+    println!("to_account_id: {:?}", to_account_id);
+    println!("transaction_time: {:?}", transaction_time);
+    println!("notes: {:?}", notes);
+    println!("image: {:?}", image);
+
+    match sqlx::query_as::<_, Transaction>(QUERY_INSERT)
         .bind(from_asset_id)
         .bind(to_asset_id)
         .bind(transaction_type as i32)
@@ -84,9 +94,17 @@ pub async fn create_transaction(
         .bind(notes)
         .bind(image)
         .fetch_one(pool)
-        .await?;
-
-    Ok(transaction)
+        .await
+    {
+        Ok(transaction) => {
+            println!("Transaction created successfully: {:?}", transaction);
+            Ok(transaction)
+        }
+        Err(err) => {
+            eprintln!("Failed to create transaction: {}", err);
+            Err(err)
+        }
+    }
 }
 
 pub async fn update_transaction_info(

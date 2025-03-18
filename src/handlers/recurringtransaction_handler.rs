@@ -10,7 +10,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
+use crate::models::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 use crate::repository::{
     create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
     get_recurring_transactions, update_recurring_transaction_info,
@@ -22,7 +22,7 @@ pub struct CreateRecurringTransactionRequest {
     pub asset_id: Uuid,
     pub amount: Decimal,
     pub interval: IntervalChoices,
-    pub transaction_type: TransactionType,
+    pub transaction_type: RecurringTransactionType,
 }
 
 #[derive(Deserialize)]
@@ -113,7 +113,7 @@ fn dummy_recurring_transaction() -> RecurringTransaction {
         amount: Decimal::ZERO,
         interval: IntervalChoices::Daily,
         next_execution: Utc::now(),
-        transaction_type: TransactionType::Income,
+        transaction_type: RecurringTransactionType::Income,
         is_active: false,
         created_at: Utc::now(),
         updated_at: Utc::now(),

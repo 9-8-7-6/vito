@@ -25,8 +25,8 @@ impl fmt::Display for IntervalChoices {
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "INTEGER")]
-pub enum TransactionType {
+#[repr(i32)]
+pub enum RecurringTransactionType {
     Income = 1,
     Expense = 2,
 }
@@ -39,7 +39,7 @@ pub struct RecurringTransaction {
     pub amount: Decimal,
     pub interval: IntervalChoices,
     pub next_execution: DateTime<Utc>,
-    pub transaction_type: TransactionType,
+    pub transaction_type: RecurringTransactionType,
     pub is_active: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -6,7 +6,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, sqlx::Type)]
-#[sqlx(type_name = "INTEGER")]
+#[repr(i32)]
 pub enum TransactionType {
     Income = 1,
     Expense = 2,

@@ -3,7 +3,7 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::{IntervalChoices, RecurringTransaction, TransactionType};
+use crate::models::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 
 const QUERY_SELECT_ALL: &str = "SELECT * FROM recurring_transactions";
 const QUERY_SELECT_ONE: &str = "SELECT * FROM recurring_transactions WHERE id = $1";
@@ -55,7 +55,7 @@ pub async fn create_recurring_transaction(
     asset_id: Uuid,
     amount: Decimal,
     interval: IntervalChoices,
-    transaction_type: TransactionType,
+    transaction_type: RecurringTransactionType,
 ) -> Result<RecurringTransaction, sqlx::Error> {
     let recurring_transaction = sqlx::query_as::<_, RecurringTransaction>(QUERY_INSERT)
         .bind(Uuid::new_v4())
