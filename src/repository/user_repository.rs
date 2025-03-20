@@ -16,18 +16,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-const QUERY_UPDATE: &str = "
-    UPDATE users 
-    SET 
-        username = COALESCE($1, username),
-        first_name = COALESCE($2, first_name),
-        last_name = COALESCE($3, last_name),
-        email = COALESCE($4, email),
-        hashed_password = COALESCE($5, hashed_password),
-        updated_at = now()
-    WHERE id = $6 
-    RETURNING *
-";
 const QUERY_DELETE: &str = "DELETE FROM users WHERE id = $1";
 
 pub async fn get_users(pool: &PgPool) -> Result<Vec<User>, sqlx::Error> {

@@ -19,23 +19,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-const QUERY_UPDATE: &str = "
-    UPDATE transactions 
-    SET 
-        from_asset_id = COALESCE($2, from_asset_id),
-        to_asset_id = COALESCE($3, to_asset_id),
-        transaction_type = COALESCE($4, transaction_type),
-        amount = COALESCE($5, amount),
-        fee = COALESCE($6, fee),
-        from_account_id = COALESCE($7, from_account_id),
-        to_account_id = COALESCE($8, to_account_id),
-        updated_at = now(),
-        transaction_time = COALESCE($9, transaction_time),
-        notes = COALESCE($10, notes),
-        image = COALESCE($11, image)
-    WHERE id = $1
-    RETURNING *
-";
 const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
 
 pub async fn get_transactions_by_account_id(

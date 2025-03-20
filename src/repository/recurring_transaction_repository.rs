@@ -16,17 +16,6 @@ const QUERY_INSERT: &str = "
     ) 
     RETURNING *
 ";
-const QUERY_UPDATE: &str = "
-    UPDATE recurring_transactions 
-    SET 
-        amount = COALESCE($1, amount),
-        interval = COALESCE($2, interval),
-        next_execution = COALESCE($3, next_execution),
-        is_active = COALESCE($4, is_active),
-        updated_at = $5
-    WHERE id = $6 
-    RETURNING *
-";
 const QUERY_DELETE: &str = "DELETE FROM recurring_transactions WHERE id = $1";
 
 pub async fn get_recurring_transactions(

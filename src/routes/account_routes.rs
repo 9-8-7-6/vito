@@ -15,7 +15,7 @@ pub fn account_routes(state: Arc<PgPool>) -> Router {
         .route(
             "/accounts/{id}",
             get(get_account_handler)
-                .put(update_account_handler)
+                .patch(update_account_handler)
                 .delete(delete_account_handler),
         )
         // .route_layer(login_required!(Backend, login_url = "/login"))

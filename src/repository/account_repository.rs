@@ -12,12 +12,6 @@ const QUERY_INSERT: &str = "
     VALUES ($1, $2, $3, $4) 
     RETURNING *
 ";
-const QUERY_UPDATE: &str = "
-    UPDATE accounts 
-    SET balance = $1, updated_at = $2 
-    WHERE account_id = $3 
-    RETURNING *
-";
 const QUERY_DELETE: &str = "DELETE FROM accounts WHERE account_id = $1";
 
 pub async fn get_accounts(pool: &PgPool) -> Result<Vec<Account>, sqlx::Error> {

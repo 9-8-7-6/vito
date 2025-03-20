@@ -24,8 +24,8 @@ pub struct CreateAssetRequest {
 
 #[derive(Deserialize)]
 pub struct UpdateAssetRequest {
-    pub asset_type: String,
-    pub balance: Decimal,
+    pub asset_type: Option<String>,
+    pub balance: Option<Decimal>,
 }
 
 pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
