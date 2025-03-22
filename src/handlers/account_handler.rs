@@ -23,7 +23,7 @@ pub struct CreateAccountRequest {
 
 #[derive(Deserialize)]
 pub struct UpdateAccountRequest {
-    balance: Decimal,
+    balance: Option<Decimal>,
 }
 
 pub async fn get_all_accounts_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {

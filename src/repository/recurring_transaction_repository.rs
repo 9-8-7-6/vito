@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{Postgres, PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
@@ -70,15 +70,39 @@ pub async fn update_recurring_transaction_info(
     next_execution: Option<DateTime<Utc>>,
     is_active: Option<bool>,
 ) -> Result<RecurringTransaction, sqlx::Error> {
-    let recurring_transaction = sqlx::query_as::<_, RecurringTransaction>(QUERY_UPDATE)
-        .bind(amount)
-        .bind(interval.map(|i| i.to_string()))
-        .bind(next_execution)
-        .bind(is_active)
-        .bind(Utc::now())
-        .bind(transaction_id)
-        .fetch_one(pool)
-        .await?;
+    if amount.is_none() && interval.is_none() && next_execution.is_none() && is_active.is_none() {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE recurring_transactions SET ");
+
+    if let Some(amount) = amount {
+        builder.push("amount = ").push_bind(amount);
+        builder.push(", ");
+    }
+
+    if let Some(interval) = interval {
+        builder.push("interval = ").push_bind(interval);
+        builder.push(", ");
+    }
+
+    if let Some(next_execution) = next_execution {
+        builder.push("next_execution = ").push_bind(next_execution);
+        builder.push(", ");
+    }
+
+    if let Some(is_active) = is_active {
+        builder.push("is_active = ").push_bind(is_active);
+        builder.push(", ");
+    }
+
+    builder.push("updated_at = ").push_bind(Utc::now());
+
+    builder.push(" WHERE id = ").push_bind(transaction_id);
+    builder.push(" RETURNING *");
+
+    let query = builder.build_query_as::<RecurringTransaction>();
+    let recurring_transaction = query.fetch_one(pool).await?;
 
     Ok(recurring_transaction)
 }

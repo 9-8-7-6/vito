@@ -1,5 +1,5 @@
 use chrono::Utc;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::User;
@@ -85,15 +85,52 @@ pub async fn update_user_info(
     email: Option<&str>,
     hashed_password: Option<&str>,
 ) -> Result<User, sqlx::Error> {
-    let user = sqlx::query_as::<_, User>(QUERY_UPDATE)
-        .bind(username)
-        .bind(first_name)
-        .bind(last_name)
-        .bind(email)
-        .bind(hashed_password)
-        .bind(user_id)
-        .fetch_one(pool)
-        .await?;
+    if username.is_none()
+        && first_name.is_none()
+        && last_name.is_none()
+        && email.is_none()
+        && hashed_password.is_none()
+    {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE users SET ");
+
+    if let Some(username) = username {
+        builder.push("username = ").push_bind(username);
+        builder.push(", ");
+    }
+
+    if let Some(first_name) = first_name {
+        builder.push("first_name = ").push_bind(first_name);
+        builder.push(", ");
+    }
+
+    if let Some(last_name) = last_name {
+        builder.push("last_name = ").push_bind(last_name);
+        builder.push(", ");
+    }
+
+    if let Some(email) = email {
+        builder.push("email = ").push_bind(email);
+        builder.push(", ");
+    }
+
+    if let Some(hashed_password) = hashed_password {
+        builder
+            .push("hashed_password = ")
+            .push_bind(hashed_password);
+        builder.push(", ");
+    }
+
+    builder.push("updated_at = ").push_bind(Utc::now());
+    builder.push(", ");
+
+    builder.push(" WHERE id = ").push_bind(user_id);
+    builder.push(" RETURNING *");
+
+    let query = builder.build_query_as::<User>();
+    let user = query.fetch_one(pool).await?;
 
     Ok(user)
 }

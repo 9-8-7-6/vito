@@ -1,6 +1,6 @@
 use chrono::Utc;
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::Account;
@@ -44,14 +44,28 @@ pub async fn create_account(
 pub async fn update_account_info(
     pool: &PgPool,
     account_id: Uuid,
-    new_balance: Decimal,
+    new_balance: Option<Decimal>,
 ) -> Result<Account, sqlx::Error> {
-    sqlx::query_as::<_, Account>(QUERY_UPDATE)
-        .bind(new_balance)
-        .bind(Utc::now())
-        .bind(account_id)
-        .fetch_one(pool)
-        .await
+    if new_balance.is_none() {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE accounts SET ");
+
+    if let Some(new_balance) = new_balance {
+        builder.push("balance = ").push_bind(new_balance);
+        builder.push(", ");
+    }
+
+    builder.push("updated_at = ").push_bind(Utc::now());
+
+    builder.push(" WHERE account_id = ").push_bind(account_id);
+    builder.push(" RETURNING *");
+
+    let query = builder.build_query_as::<Account>();
+    let account = query.fetch_one(pool).await?;
+
+    Ok(account)
 }
 
 pub async fn delete_account(pool: &PgPool, account_id: Uuid) -> Result<(), sqlx::Error> {

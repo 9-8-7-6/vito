@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::{Transaction, TransactionType};
@@ -107,20 +107,85 @@ pub async fn update_transaction_info(
     notes: Option<String>,
     image: Option<String>,
 ) -> Result<Transaction, sqlx::Error> {
-    let transaction = sqlx::query_as::<_, Transaction>(QUERY_UPDATE)
-        .bind(transaction_id)
-        .bind(from_asset_id)
-        .bind(to_asset_id)
-        .bind(transaction_type.map(|t| t as i32))
-        .bind(amount)
-        .bind(fee)
-        .bind(from_account_id)
-        .bind(to_account_id)
-        .bind(transaction_time)
-        .bind(notes)
-        .bind(image)
-        .fetch_one(pool)
-        .await?;
+    if from_asset_id.is_none()
+        && to_asset_id.is_none()
+        && transaction_type.is_none()
+        && amount.is_none()
+        && fee.is_none()
+        && from_account_id.is_none()
+        && to_account_id.is_none()
+        && transaction_time.is_none()
+        && notes.is_none()
+        && image.is_none()
+    {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE transactions SET ");
+
+    if let Some(from_asset_id) = from_asset_id {
+        builder.push("from_asset_id = ").push_bind(from_asset_id);
+        builder.push(", ");
+    }
+
+    if let Some(to_asset_id) = to_asset_id {
+        builder.push("to_asset_id = ").push_bind(to_asset_id);
+        builder.push(", ");
+    }
+
+    if let Some(transaction_type) = transaction_type {
+        builder
+            .push("transaction_type = ")
+            .push_bind(transaction_type);
+        builder.push(", ");
+    }
+
+    if let Some(amount) = amount {
+        builder.push("amount = ").push_bind(amount);
+        builder.push(", ");
+    }
+
+    if let Some(fee) = fee {
+        builder.push("fee = ").push_bind(fee);
+        builder.push(", ");
+    }
+
+    if let Some(from_account_id) = from_account_id {
+        builder
+            .push("from_account_id = ")
+            .push_bind(from_account_id);
+        builder.push(", ");
+    }
+
+    if let Some(to_account_id) = to_account_id {
+        builder.push("to_account_id = ").push_bind(to_account_id);
+        builder.push(", ");
+    }
+
+    if let Some(transaction_time) = transaction_time {
+        builder
+            .push("transaction_time = ")
+            .push_bind(transaction_time);
+        builder.push(", ");
+    }
+
+    if let Some(notes) = notes {
+        builder.push("notes = ").push_bind(notes);
+        builder.push(", ");
+    }
+
+    if let Some(image) = image {
+        builder.push("image = ").push_bind(image);
+        builder.push(", ");
+    }
+    builder.push("updated_at = ").push_bind(Utc::now());
+    builder.push(", ");
+
+    builder.push(" WHERE id = ").push_bind(transaction_id);
+    builder.push(" RETURNING *");
+
+    let query = builder.build_query_as::<Transaction>();
+    let transaction = query.fetch_one(pool).await?;
 
     Ok(transaction)
 }
