@@ -10,7 +10,7 @@ pub fn user_routes(state: Arc<PgPool>) -> Router {
         .route(
             "/users/{id}",
             get(get_user_handler)
-                .put(update_user_handler)
+                .patch(update_user_handler)
                 .delete(delete_user_handler),
         )
         .with_state(state)

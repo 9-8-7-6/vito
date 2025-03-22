@@ -1,5 +1,5 @@
 use axum::{
-    routing::{get, post},
+    routing::{get, patch, post},
     Router,
 };
 use axum_login::login_required;
@@ -15,7 +15,7 @@ pub fn transaction_routes(state: Arc<PgPool>) -> Router {
         .route(
             "/transactions/{id}",
             get(get_transaction_by_transaction_id_handler)
-                .put(update_transaction_handler)
+                .patch(update_transaction_handler)
                 .delete(delete_transaction_handler),
         )
         .route(

@@ -58,6 +58,7 @@ async fn main() {
             Method::OPTIONS,
             Method::DELETE,
             Method::PUT,
+            Method::PATCH,
         ])
         .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])

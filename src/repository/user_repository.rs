@@ -124,7 +124,6 @@ pub async fn update_user_info(
     }
 
     builder.push("updated_at = ").push_bind(Utc::now());
-    builder.push(", ");
 
     builder.push(" WHERE id = ").push_bind(user_id);
     builder.push(" RETURNING *");

@@ -179,7 +179,6 @@ pub async fn update_transaction_info(
         builder.push(", ");
     }
     builder.push("updated_at = ").push_bind(Utc::now());
-    builder.push(", ");
 
     builder.push(" WHERE id = ").push_bind(transaction_id);
     builder.push(" RETURNING *");

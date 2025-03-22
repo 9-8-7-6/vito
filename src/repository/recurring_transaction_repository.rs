@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use sqlx::{Postgres, PgPool, QueryBuilder};
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
@@ -74,7 +74,8 @@ pub async fn update_recurring_transaction_info(
         return Err(sqlx::Error::RowNotFound);
     }
 
-    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE recurring_transactions SET ");
+    let mut builder: QueryBuilder<Postgres> =
+        QueryBuilder::new("UPDATE recurring_transactions SET ");
 
     if let Some(amount) = amount {
         builder.push("amount = ").push_bind(amount);
