@@ -1,6 +1,6 @@
-use chrono::{format, Utc};
+use chrono::Utc;
 use rust_decimal::Decimal;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
 use crate::models::Asset;
@@ -50,43 +50,31 @@ pub async fn update_asset_info(
     asset_type: Option<String>,
     balance: Option<Decimal>,
 ) -> Result<Asset, sqlx::Error> {
-    let mut query = String::from("UPDATE assets SET ");
-    let mut params: Vec<Box<dyn sqlx::Encode<'_, sqlx::Postgres> + Send + Sync>> = Vec::new();
-    let mut cnt = 1;
-    
-    if let Some(asset_type) = asset_type {
-        query.push_str(&format!("asset_type = ${}, ", cnt));
-        params.push(Box::new(asset_type));
-        cnt += 1;
-    }
-    if let Some(balance) = balance {
-        query.push_str(&format!("balance = ${}, ", cnt));
-        params.push(Box::new(balance));
-        cnt += 1;
-    }
-
-    if params.is_empty() {
+    if asset_type.is_none() && balance.is_none() {
         return Err(sqlx::Error::RowNotFound);
     }
 
-    // 加入 updated_at 欄位
-    let now = Utc::now();
-    query.push_str(&format!("updated_at = ${} ", cnt));
-    params.push(Box::new(now));
-    cnt += 1;
+    let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE assets SET ");
 
-    // WHERE 條件
-    query.push_str(&format!("WHERE id = ${} RETURNING *", cnt));
-    params.push(Box::new(asset_id));
-
-    let mut query = sqlx::query_as::<_, Asset>(&query);
-
-    // 綁定參數
-    for param in params {
-        query = query.bind(param);
+    if let Some(asset_type) = asset_type {
+        builder.push("asset_type = ").push_bind(asset_type);
+        builder.push(", ");
     }
 
-    query.fetch_one(pool).await
+    if let Some(balance) = balance {
+        builder.push("balance = ").push_bind(balance);
+        builder.push(", ");
+    }
+
+    builder.push("updated_at = ").push_bind(Utc::now());
+
+    builder.push(" WHERE id = ").push_bind(asset_id);
+    builder.push(" RETURNING *");
+
+    let query = builder.build_query_as::<Asset>();
+    let asset = query.fetch_one(pool).await?;
+
+    Ok(asset)
 }
 
 pub async fn delete_asset(pool: &PgPool, asset_id: Uuid) -> Result<(), sqlx::Error> {
