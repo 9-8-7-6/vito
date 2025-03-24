@@ -13,7 +13,7 @@ use uuid::Uuid;
 use crate::models::{Transaction, TransactionList, TransactionType};
 use crate::repository::{
     create_transaction, delete_transaction, get_transaction_by_transation_id,
-    get_transactions_by_account_id, update_transaction_info,
+    get_transactions_by_account_id, update_asset_balance, update_transaction_info,
 };
 
 #[derive(Deserialize)]
@@ -83,7 +83,28 @@ pub async fn add_transaction_handler(
     )
     .await
     {
-        Ok(transaction) => transaction.into_response(),
+        Ok(transaction) => {
+            if let Some(to_asset_id) = payload.to_asset_id {
+                let offset = payload.amount;
+
+                if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
+                    eprintln!("Failed to update to_asset balance: {:?}", e);
+                }
+            }
+
+            if let Some(from_asset_id) = payload.from_asset_id {
+                let mut offset = payload.amount;
+
+                if let Some(fee) = payload.fee {
+                    offset += fee;
+                }
+
+                if let Err(e) = update_asset_balance(&pool, from_asset_id, -offset).await {
+                    eprintln!("Failed to update from_asset balance: {:?}", e);
+                }
+            }
+            transaction.into_response()
+        }
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
     }
 }
