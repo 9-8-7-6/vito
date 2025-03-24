@@ -114,7 +114,30 @@ pub async fn update_transaction_handler(
     Path(transaction_id): Path<Uuid>,
     Json(payload): Json<UpdateTransactionRequest>,
 ) -> (StatusCode, Json<Transaction>) {
-    match update_transaction_info(
+    let old_transaction = match get_transaction_by_transation_id(&pool, transaction_id).await {
+        Ok(tx) => tx,
+        Err(_) => return (StatusCode::NOT_FOUND, Json(dummy_transaction())),
+    };
+
+    if let Some(to_asset_id) = old_transaction.to_asset_id {
+        let offset = -old_transaction.amount;
+
+        if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
+            eprintln!("Failed to update to_asset balance: {:?}", e);
+        }
+    }
+
+    if let Some(from_asset_id) = old_transaction.from_asset_id {
+        let mut offset = old_transaction.amount;
+
+        offset += old_transaction.fee;
+
+        if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
+            eprintln!("Failed to update from_asset balance: {:?}", e);
+        }
+    }
+
+    let updated_transaction = match update_transaction_info(
         &pool,
         transaction_id,
         payload.from_asset_id,
@@ -130,15 +153,58 @@ pub async fn update_transaction_handler(
     )
     .await
     {
-        Ok(transaction) => (StatusCode::OK, Json(transaction)),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_transaction())),
+        Ok(tx) => tx,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_transaction())),
+    };
+
+    if let Some(to_asset_id) = updated_transaction.to_asset_id {
+        let offset = updated_transaction.amount;
+
+        if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
+            eprintln!("Failed to apply new to_asset balance: {:?}", e);
+        }
     }
+
+    if let Some(from_asset_id) = updated_transaction.from_asset_id {
+        let mut offset = updated_transaction.amount;
+
+        offset += updated_transaction.fee;
+
+        if let Err(e) = update_asset_balance(&pool, from_asset_id, -offset).await {
+            eprintln!("Failed to apply new from_asset balance: {:?}", e);
+        }
+    }
+
+    (StatusCode::OK, Json(updated_transaction))
 }
 
 pub async fn delete_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> impl IntoResponse {
+    let old_transaction = match get_transaction_by_transation_id(&pool, transaction_id).await {
+        Ok(tx) => tx,
+        Err(_) => return StatusCode::NO_CONTENT.into_response(),
+    };
+
+    if let Some(to_asset_id) = old_transaction.to_asset_id {
+        let offset = -old_transaction.amount;
+
+        if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
+            eprintln!("Failed to update to_asset balance: {:?}", e);
+        }
+    }
+
+    if let Some(from_asset_id) = old_transaction.from_asset_id {
+        let mut offset = old_transaction.amount;
+
+        offset += old_transaction.fee;
+
+        if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
+            eprintln!("Failed to update from_asset balance: {:?}", e);
+        }
+    }
+
     match delete_transaction(&pool, transaction_id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
