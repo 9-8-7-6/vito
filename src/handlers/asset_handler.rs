@@ -37,10 +37,10 @@ pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl Int
 
 pub async fn get_asset_handler(
     State(pool): State<Arc<PgPool>>,
-    Path(asset_id): Path<Uuid>,
+    Path(user_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match get_asset_by_user_id(&pool, asset_id).await {
-        Ok(asset) => AssetList(asset).into_response(),
+    match get_asset_by_user_id(&pool, user_id).await {
+        Ok(assets) => AssetList(assets).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }

@@ -3,20 +3,21 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::{Transaction, TransactionType};
+use crate::models::{EnrichedTransaction, Transaction, TransactionType};
+use crate::repository::asset_repository::get_asset_type_by_asset_id;
 
 const QUERY_SELECT_BY_ACCOUNT_ID: &str =
     "SELECT * FROM transactions WHERE from_account_id = $1 OR to_account_id = $1";
 const QUERY_SELECT_BY_TRANSACTION_ID: &str = "SELECT * FROM transactions WHERE id = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO transactions (
-        from_asset_id, to_asset_id, transaction_type, 
-        amount, fee, from_account_id, to_account_id, 
+        from_asset_id, to_asset_id, transaction_type,
+        amount, fee, from_account_id, to_account_id,
         created_at, updated_at, transaction_time, notes, image
     ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, 
+        $1, $2, $3, $4, $5, $6, $7,
         $8, $9, $10, $11, $12
-    ) 
+    )
     RETURNING *
 ";
 const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
@@ -24,11 +25,45 @@ const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
 pub async fn get_transactions_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
-) -> Result<Vec<Transaction>, sqlx::Error> {
-    sqlx::query_as::<_, Transaction>(QUERY_SELECT_BY_ACCOUNT_ID)
+) -> Result<Vec<EnrichedTransaction>, sqlx::Error> {
+    let transactions = sqlx::query_as::<_, Transaction>(QUERY_SELECT_BY_ACCOUNT_ID)
         .bind(account_id)
         .fetch_all(pool)
-        .await
+        .await?;
+
+    let mut enriched = Vec::with_capacity(transactions.len());
+
+    for tx in transactions {
+        let from_asset_type = match tx.from_asset_id {
+            Some(asset_id) => Some(get_asset_type_by_asset_id(pool, asset_id).await?),
+            None => None,
+        };
+
+        let to_asset_type = match tx.to_asset_id {
+            Some(asset_id) => Some(get_asset_type_by_asset_id(pool, asset_id).await?),
+            None => None,
+        };
+
+        enriched.push(EnrichedTransaction {
+            id: tx.id,
+            from_asset_id: tx.from_asset_id,
+            to_asset_id: tx.to_asset_id,
+            transaction_type: tx.transaction_type,
+            amount: tx.amount,
+            fee: tx.fee,
+            from_account_id: tx.from_account_id,
+            to_account_id: tx.to_account_id,
+            created_at: tx.created_at,
+            updated_at: tx.updated_at,
+            transaction_time: tx.transaction_time,
+            notes: tx.notes,
+            image: tx.image,
+            from_asset_type,
+            to_asset_type,
+        });
+    }
+
+    Ok(enriched)
 }
 
 pub async fn get_transaction_by_transation_id(
@@ -54,18 +89,6 @@ pub async fn create_transaction(
     notes: Option<String>,
     image: Option<String>,
 ) -> Result<Transaction, sqlx::Error> {
-    println!("Starting create_transaction...");
-    println!("from_asset_id: {:?}", from_asset_id);
-    println!("to_asset_id: {:?}", to_asset_id);
-    println!("transaction_type: {:?}", transaction_type);
-    println!("amount: {:?}", amount);
-    println!("fee: {:?}", fee);
-    println!("from_account_id: {:?}", from_account_id);
-    println!("to_account_id: {:?}", to_account_id);
-    println!("transaction_time: {:?}", transaction_time);
-    println!("notes: {:?}", notes);
-    println!("image: {:?}", image);
-
     match sqlx::query_as::<_, Transaction>(QUERY_INSERT)
         .bind(from_asset_id)
         .bind(to_asset_id)

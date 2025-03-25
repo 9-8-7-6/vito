@@ -10,7 +10,9 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{Transaction, TransactionList, TransactionType};
+use crate::models::{
+    EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionList, TransactionType,
+};
 use crate::repository::{
     create_transaction, delete_transaction, get_transaction_by_transation_id,
     get_transactions_by_account_id, update_asset_balance, update_transaction_info,
@@ -59,7 +61,7 @@ pub async fn get_transaction_by_account_id_handler(
     Path(account_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match get_transactions_by_account_id(&pool, account_id).await {
-        Ok(transaction) => TransactionList(transaction).into_response(),
+        Ok(tx) => EnrichedTransactionList(tx).into_response(),
         Err(_) => StatusCode::NOT_FOUND.into_response(),
     }
 }

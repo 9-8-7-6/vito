@@ -1,6 +1,6 @@
 use chrono::Utc;
 use rust_decimal::Decimal;
-use sqlx::{PgPool, Postgres, QueryBuilder};
+use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 use uuid::Uuid;
 
 use crate::models::Asset;
@@ -27,6 +27,18 @@ pub async fn get_asset_by_user_id(pool: &PgPool, user_id: Uuid) -> Result<Vec<As
         .bind(user_id)
         .fetch_all(pool)
         .await
+}
+
+pub async fn get_asset_type_by_asset_id(
+    pool: &PgPool,
+    asset_id: Uuid,
+) -> Result<String, sqlx::Error> {
+    let row = sqlx::query("SELECT asset_type FROM assets WHERE id = $1")
+        .bind(asset_id)
+        .fetch_one(pool)
+        .await?;
+
+    Ok(row.get("asset_type"))
 }
 
 pub async fn create_asset(
