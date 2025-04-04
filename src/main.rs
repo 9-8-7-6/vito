@@ -20,7 +20,7 @@ use utoipa::{
     Modify, OpenApi,
 };
 use utoipa_axum::router::OpenApiRouter;
-use utoipa_swagger_ui::SwaggerUi;
+// use utoipa_swagger_ui::SwaggerUi;
 
 use crate::models::Backend;
 
@@ -87,7 +87,7 @@ async fn main() {
     let (openapi_router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
 
     let routes_all = Router::new()
-        .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
+        // .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
         .merge(openapi_router)
         .merge(account_routes(state.clone()))
         .merge(user_routes(state.clone()))

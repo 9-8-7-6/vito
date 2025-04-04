@@ -32,7 +32,6 @@ tower-cookies = "0.11.0"
 tower-sessions-redis-store = "0.16.0"
 tower-sessions = "0.14.0"
 time = "0.3.39"
-utoipa-swagger-ui = { version = "9.0.0", features = ["axum"] }
 utoipa = { version = "5.3.1", features = ["axum_extras"] }
 utoipa-axum = "0.2.0"
 http = "1.3.1"

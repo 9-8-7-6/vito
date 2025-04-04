@@ -6,3 +6,4 @@ Cargo.lock
 /target
 output.log
 .env
+.env.bak
