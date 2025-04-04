@@ -18,5 +18,7 @@ This is the Rust rewrite of the old Django project:
 ```sh
 git clone https://github.com/9-8-7-6/vito.git
 cd vito
+chmod +x generate-env.sh
+./generate-env.sh
 docker compose up --build -d
 cargo watch -x run
