@@ -8,6 +8,7 @@ pub mod user;
 pub use account::{Account, AccountList};
 pub use asset::{Asset, AssetList};
 pub use recurring_transaction::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
+pub use stock::{StockHolding, StockHoldingList, StockMetadata, StockMetadataList};
 pub use transaction::{
     EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionList, TransactionType,
 };

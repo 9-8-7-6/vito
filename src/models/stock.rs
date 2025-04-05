@@ -6,7 +6,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct StockHoldings {
+pub struct StockHolding {
     pub id: Uuid,
     pub account_id: Uuid,
     pub stock_id: Uuid,
@@ -16,16 +16,16 @@ pub struct StockHoldings {
     pub updated_at: DateTime<Utc>,
 }
 
-impl IntoResponse for StockHoldings {
+impl IntoResponse for StockHolding {
     fn into_response(self) -> axum::response::Response {
         Json(self).into_response()
     }
 }
 
 #[derive(Debug, Serialize)]
-pub struct StockHoldingsList(pub Vec<StockHoldings>);
+pub struct StockHoldingList(pub Vec<StockHolding>);
 
-impl IntoResponse for StockHoldingsList {
+impl IntoResponse for StockHoldingList {
     fn into_response(self) -> axum::response::Response {
         Json(self).into_response()
     }

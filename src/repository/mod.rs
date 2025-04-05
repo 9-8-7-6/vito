@@ -1,6 +1,7 @@
 pub mod account_repository;
 pub mod asset_repository;
 pub mod recurring_transaction_repository;
+pub mod stock_repository;
 pub mod transaction_repository;
 pub mod user_repository;
 
@@ -14,6 +15,11 @@ pub use asset_repository::{
 pub use recurring_transaction_repository::{
     create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
     get_recurring_transactions, update_recurring_transaction_info,
+};
+pub use stock_repository::{
+    create_stock_holding, create_stock_metadata, delete_stock_holding, delete_stock_metadata,
+    get_all_stock_metadata, get_stock_holdings, get_stock_holdings_by_account_id,
+    get_stock_metadata_by_id, update_stock_holding_info, update_stock_metadata,
 };
 pub use transaction_repository::{
     create_transaction, delete_transaction, get_transaction_by_transation_id,
