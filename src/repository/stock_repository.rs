@@ -1,3 +1,4 @@
+use crate::api::stock::stock_metadata::Metadata;
 use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Row};
@@ -100,6 +101,7 @@ const QUERY_METADATA_INSERT: &str = "
     VALUES ($1, $2, $3, $4)
     RETURNING *
 ";
+const QUERY_METADATA_DELETE_ALL: &str = "DELETE FROM stock_metadata";
 const QUERY_METADATA_DELETE: &str = "DELETE FROM stock_metadata WHERE id = $1";
 
 pub async fn get_all_stock_metadata(pool: &PgPool) -> Result<Vec<StockMetadata>, sqlx::Error> {
@@ -118,19 +120,18 @@ pub async fn get_stock_metadata_by_id(
         .await
 }
 
-pub async fn create_stock_metadata(
-    pool: &PgPool,
-    country: String,
-    ticker_symbol: String,
-    name: String,
-) -> Result<StockMetadata, sqlx::Error> {
-    sqlx::query_as::<_, StockMetadata>(QUERY_METADATA_INSERT)
-        .bind(Uuid::new_v4())
-        .bind(country)
-        .bind(ticker_symbol)
-        .bind(name)
-        .fetch_one(pool)
-        .await
+pub async fn create_stock_metadata(pool: &PgPool, datas: Vec<Metadata>) -> Result<(), sqlx::Error> {
+    for data in datas {
+        sqlx::query(QUERY_METADATA_INSERT)
+            .bind(Uuid::new_v4())
+            .bind(data.country)
+            .bind(data.ticker_symbol)
+            .bind(data.company_name)
+            .execute(pool)
+            .await?;
+    }
+
+    Ok(())
 }
 
 pub async fn update_stock_metadata(
@@ -186,6 +187,13 @@ pub async fn update_stock_metadata(
 pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE)
         .bind(id)
+        .execute(pool)
+        .await
+        .map(|_| ())
+}
+
+pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(QUERY_METADATA_DELETE_ALL)
         .execute(pool)
         .await
         .map(|_| ())

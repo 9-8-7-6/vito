@@ -20,10 +20,7 @@ pub fn stock_routes(state: Arc<PgPool>) -> Router {
             "/stock-holding/{id}",
             put(update_stock_holding_handler).delete(delete_stock_holding_handler),
         )
-        .route(
-            "/stock-metadata",
-            get(get_all_stock_metadata_handler).post(create_stock_metadata_handler),
-        )
+        .route("/stock-metadata", get(get_all_stock_metadata_handler))
         .route(
             "/stock-metadata/{id}",
             get(get_stock_metadata_by_id_handler)

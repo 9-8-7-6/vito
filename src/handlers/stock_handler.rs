@@ -118,16 +118,6 @@ pub async fn get_stock_metadata_by_id_handler(
     }
 }
 
-pub async fn create_stock_metadata_handler(
-    State(pool): State<Arc<PgPool>>,
-    Json(payload): Json<CreateStockMetadataRequest>,
-) -> impl IntoResponse {
-    match create_stock_metadata(&pool, payload.country, payload.ticker_symbol, payload.name).await {
-        Ok(metadata) => metadata.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
-}
-
 pub async fn update_stock_metadata_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,

@@ -1,8 +1,10 @@
+mod api;
 mod db;
 mod handlers;
 mod models;
 mod repository;
 mod routes;
+mod scheduler;
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -12,6 +14,7 @@ use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use http::{HeaderValue, Method};
+use scheduler::stock_meta_updater::update_stock_metadata_if_first_day;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::CorsLayer;
@@ -43,7 +46,14 @@ async fn main() {
         redis_url: std::env::var("REDIS_URL").expect("REDIS_URL not set"),
     };
 
-    let state = Arc::new(db::init_db(&urls.database_url).await);
+    let state: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(db::init_db(&urls.database_url).await);
+    let cloned_pool = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = update_stock_metadata_if_first_day(&cloned_pool).await {
+            eprintln!("update_stock_metadata_if_first_day failed: {}", e);
+        }
+    });
+
     let backend = Backend::new(&urls.database_url)
         .await
         .expect("Failed to initialize Backend: Check DATABASE_URL");
