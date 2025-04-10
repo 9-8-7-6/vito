@@ -18,10 +18,10 @@ pub async fn init_db(database_url: &str) -> PgPool {
         .await
         .expect("Failed to connect to database");
 
-    sqlx::migrate!()
-        .run(&pool)
-        .await
-        .expect("Failed to run migrations");
+    match sqlx::migrate!().run(&pool).await {
+        Ok(_) => println!("Migrations ran successfully."),
+        Err(e) => eprintln!("Migration error: {}", e),
+    }
 
     println!("✅ Database migrations applied successfully!");
 

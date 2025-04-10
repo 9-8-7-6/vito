@@ -17,3 +17,17 @@ CREATE TABLE stock_holdings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE stock_infos (
+    id BIGSERIAL PRIMARY KEY,
+    country TEXT NOT NULL,
+    ticker_symbol TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    trade_volume TEXT NOT NULL,
+    trade_value TEXT NOT NULL,
+    opening_price TEXT NOT NULL,
+    highest_price TEXT NOT NULL,
+    lowest_price TEXT NOT NULL,
+    closing_price TEXT NOT NULL,
+    change TEXT NOT NULL,
+    transaction TEXT NOT NULL
+);
