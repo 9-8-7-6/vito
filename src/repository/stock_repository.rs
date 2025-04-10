@@ -6,20 +6,13 @@ use uuid::Uuid;
 
 use crate::models::{StockHolding, StockInfo, StockMetadata};
 
-const QUERY_SELECT_ALL: &str = "SELECT * FROM stock_holdings";
 const QUERY_SELECT_BY_ACCOUNT_ID: &str = "SELECT * FROM stock_holdings WHERE account_id = $1";
 const QUERY_INSERT: &str = "
-    INSERT INTO stock_holdings (id, account_id, stock_id, quantity, average_price, created_at, updated_at)
+    INSERT INTO stock_holdings (id, account_id, ticker_symble, quantity, average_price, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
 ";
 const QUERY_DELETE: &str = "DELETE FROM stock_holdings WHERE id = $1";
-
-pub async fn get_stock_holdings(pool: &PgPool) -> Result<Vec<StockHolding>, sqlx::Error> {
-    sqlx::query_as::<_, StockHolding>(QUERY_SELECT_ALL)
-        .fetch_all(pool)
-        .await
-}
 
 pub async fn get_stock_holdings_by_account_id(
     pool: &PgPool,
@@ -34,14 +27,14 @@ pub async fn get_stock_holdings_by_account_id(
 pub async fn create_stock_holding(
     pool: &PgPool,
     account_id: Uuid,
-    stock_id: Uuid,
+    ticker_symble: Uuid,
     quantity: Decimal,
     average_price: Decimal,
 ) -> Result<StockHolding, sqlx::Error> {
     sqlx::query_as::<_, StockHolding>(QUERY_INSERT)
         .bind(Uuid::new_v4())
         .bind(account_id)
-        .bind(stock_id)
+        .bind(ticker_symble)
         .bind(quantity)
         .bind(average_price)
         .bind(Utc::now())

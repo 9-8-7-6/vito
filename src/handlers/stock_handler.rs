@@ -13,14 +13,14 @@ use uuid::Uuid;
 use crate::models::{StockHolding, StockHoldingList, StockMetadata, StockMetadataList};
 use crate::repository::{
     create_stock_holding, create_stock_metadata, delete_stock_holding, delete_stock_metadata,
-    get_all_stock_metadata, get_stock_holdings, get_stock_holdings_by_account_id,
-    get_stock_metadata_by_id, update_stock_holding_info, update_stock_metadata,
+    get_all_stock_metadata, get_stock_holdings_by_account_id, get_stock_metadata_by_id,
+    update_stock_holding_info, update_stock_metadata,
 };
 
 #[derive(Deserialize)]
 pub struct CreateStockHoldingRequest {
     pub account_id: Uuid,
-    pub stock_id: Uuid,
+    pub ticker_symble: Uuid,
     pub quantity: Decimal,
     pub average_price: Decimal,
 }
@@ -29,13 +29,6 @@ pub struct CreateStockHoldingRequest {
 pub struct UpdateStockHoldingRequest {
     pub quantity: Option<Decimal>,
     pub average_price: Option<Decimal>,
-}
-
-pub async fn get_all_stock_holdings_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
-    match get_stock_holdings(&pool).await {
-        Ok(holdings) => StockHoldingList(holdings).into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-    }
 }
 
 pub async fn get_stock_holdings_by_account_handler(
@@ -55,7 +48,7 @@ pub async fn create_stock_holding_handler(
     match create_stock_holding(
         &pool,
         payload.account_id,
-        payload.stock_id,
+        payload.ticker_symble,
         payload.quantity,
         payload.average_price,
     )

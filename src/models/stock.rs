@@ -9,7 +9,7 @@ use uuid::Uuid;
 pub struct StockHolding {
     pub id: Uuid,
     pub account_id: Uuid,
-    pub stock_id: Uuid,
+    pub ticker_symble: Uuid,
     pub quantity: Decimal,
     pub average_price: Decimal,
     pub created_at: DateTime<Utc>,
