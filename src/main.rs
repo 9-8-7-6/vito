@@ -14,7 +14,7 @@ use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
 use http::{HeaderValue, Method};
-use scheduler::stock_meta_updater::update_stock_metadata_if_first_day;
+use scheduler::{update_stock_info_every_day, update_stock_metadata_if_first_day};
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::CorsLayer;
@@ -47,9 +47,17 @@ async fn main() {
     };
 
     let state: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(db::init_db(&urls.database_url).await);
-    let cloned_pool = state.clone();
+
+    let cloned_pool1 = state.clone();
     tokio::spawn(async move {
-        if let Err(e) = update_stock_metadata_if_first_day(&cloned_pool).await {
+        if let Err(e) = update_stock_info_every_day(&cloned_pool1).await {
+            eprintln!("update_stock_info_every_day failed: {}", e);
+        }
+    });
+
+    let cloned_pool2 = state.clone();
+    tokio::spawn(async move {
+        if let Err(e) = update_stock_metadata_if_first_day(&cloned_pool2).await {
             eprintln!("update_stock_metadata_if_first_day failed: {}", e);
         }
     });

@@ -10,7 +10,6 @@ use tokio::time::sleep;
 pub async fn update_stock_metadata_if_first_day(
     pool: &PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Running initial stock metadata update when the backend server start");
     if let Err(e) = run_stock_metadata_job(pool).await {
         eprintln!("Initial stock metadata update failed: {}", e);
     }

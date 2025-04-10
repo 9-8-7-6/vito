@@ -4,7 +4,7 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 use uuid::Uuid;
 
-use crate::models::{StockHolding, StockMetadata};
+use crate::models::{StockHolding, StockInfo, StockMetadata};
 
 const QUERY_SELECT_ALL: &str = "SELECT * FROM stock_holdings";
 const QUERY_SELECT_BY_ACCOUNT_ID: &str = "SELECT * FROM stock_holdings WHERE account_id = $1";
@@ -194,6 +194,48 @@ pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::
 
 pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE_ALL)
+        .execute(pool)
+        .await
+        .map(|_| ())
+}
+
+const QUERY_INSERT_STOCK_INFO: &str = "
+    INSERT INTO stock_infos (
+        country, ticker_symbol, company_name, trade_volume,
+        trade_value, opening_price, highest_price, lowest_price,
+        closing_price, \"change\", transaction
+    )
+    VALUES (
+        $1, $2, $3, $4,
+        $5, $6, $7, $8,
+        $9, $10, $11
+    )
+    RETURNING *
+";
+const QUERY_DELETE_ALL_STOCK_INFOS: &str = "DELETE FROM stock_infos";
+
+pub async fn insert_stock_infos(pool: &PgPool, infos: Vec<StockInfo>) -> Result<(), sqlx::Error> {
+    for info in infos {
+        sqlx::query(QUERY_INSERT_STOCK_INFO)
+            .bind(info.country)
+            .bind(info.ticker_symbol)
+            .bind(info.company_name)
+            .bind(info.trade_volume)
+            .bind(info.trade_value)
+            .bind(info.opening_price)
+            .bind(info.highest_price)
+            .bind(info.lowest_price)
+            .bind(info.closing_price)
+            .bind(info.change)
+            .bind(info.transaction)
+            .execute(pool)
+            .await?;
+    }
+    Ok(())
+}
+
+pub async fn delete_all_stock_infos(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(QUERY_DELETE_ALL_STOCK_INFOS)
         .execute(pool)
         .await
         .map(|_| ())

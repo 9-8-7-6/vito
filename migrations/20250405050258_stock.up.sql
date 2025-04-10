@@ -18,7 +18,7 @@ CREATE TABLE stock_holdings (
 );
 
 CREATE TABLE stock_infos (
-    id BIGSERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country TEXT NOT NULL,
     ticker_symbol TEXT NOT NULL,
     company_name TEXT NOT NULL,

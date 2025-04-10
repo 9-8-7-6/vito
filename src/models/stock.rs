@@ -53,3 +53,33 @@ impl IntoResponse for StockMetadataList {
         Json(self).into_response()
     }
 }
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct StockInfo {
+    pub country: String,
+    pub ticker_symbol: String,
+    pub company_name: String,
+    pub trade_volume: String,
+    pub trade_value: String,
+    pub opening_price: String,
+    pub highest_price: String,
+    pub lowest_price: String,
+    pub closing_price: String,
+    pub change: String,
+    pub transaction: String,
+}
+
+impl IntoResponse for StockInfo {
+    fn into_response(self) -> axum::response::Response {
+        Json(self).into_response()
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub struct StockInfoList(pub Vec<StockInfo>);
+
+impl IntoResponse for StockInfoList {
+    fn into_response(self) -> axum::response::Response {
+        Json(self).into_response()
+    }
+}
