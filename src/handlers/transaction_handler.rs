@@ -52,7 +52,10 @@ pub async fn get_transaction_by_transaction_id_handler(
 ) -> impl IntoResponse {
     match get_transaction_by_transation_id(&pool, transaction_id).await {
         Ok(transaction) => transaction.into_response(),
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => {
+            eprintln!("Failed to fetch transaction {}: {:?}", transaction_id, err);
+            StatusCode::NOT_FOUND.into_response()
+        }
     }
 }
 
@@ -62,7 +65,13 @@ pub async fn get_transaction_by_account_id_handler(
 ) -> impl IntoResponse {
     match get_transactions_by_account_id(&pool, account_id).await {
         Ok(tx) => EnrichedTransactionList(tx).into_response(),
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => {
+            eprintln!(
+                "Failed to fetch transactions by account {}: {:?}",
+                account_id, err
+            );
+            StatusCode::NOT_FOUND.into_response()
+        }
     }
 }
 
@@ -107,7 +116,10 @@ pub async fn add_transaction_handler(
             }
             transaction.into_response()
         }
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Failed to create transaction: {:?}", err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -118,14 +130,19 @@ pub async fn update_transaction_handler(
 ) -> (StatusCode, Json<Transaction>) {
     let old_transaction = match get_transaction_by_transation_id(&pool, transaction_id).await {
         Ok(tx) => tx,
-        Err(_) => return (StatusCode::NOT_FOUND, Json(dummy_transaction())),
+        Err(err) => {
+            eprintln!(
+                "Failed to fetch transaction before update {}: {:?}",
+                transaction_id, err
+            );
+            return (StatusCode::NOT_FOUND, Json(dummy_transaction()));
+        }
     };
 
     if let Some(to_asset_id) = old_transaction.to_asset_id {
         let offset = -old_transaction.amount;
-
         if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
-            eprintln!("Failed to update to_asset balance: {:?}", e);
+            eprintln!("Failed to revert to_asset balance: {:?}", e);
         }
     }
 
@@ -135,7 +152,7 @@ pub async fn update_transaction_handler(
         offset += old_transaction.fee;
 
         if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
-            eprintln!("Failed to update from_asset balance: {:?}", e);
+            eprintln!("Failed to revert from_asset balance: {:?}", e);
         }
     }
 
@@ -156,12 +173,14 @@ pub async fn update_transaction_handler(
     .await
     {
         Ok(tx) => tx,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_transaction())),
+        Err(err) => {
+            eprintln!("Failed to update transaction {}: {:?}", transaction_id, err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_transaction()));
+        }
     };
 
     if let Some(to_asset_id) = updated_transaction.to_asset_id {
         let offset = updated_transaction.amount;
-
         if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
             eprintln!("Failed to apply new to_asset balance: {:?}", e);
         }
@@ -186,14 +205,20 @@ pub async fn delete_transaction_handler(
 ) -> impl IntoResponse {
     let old_transaction = match get_transaction_by_transation_id(&pool, transaction_id).await {
         Ok(tx) => tx,
-        Err(_) => return StatusCode::NO_CONTENT.into_response(),
+        Err(err) => {
+            eprintln!(
+                "Transaction {} not found, delete skipped: {:?}",
+                transaction_id, err
+            );
+            return StatusCode::NO_CONTENT.into_response();
+        }
     };
 
     if let Some(to_asset_id) = old_transaction.to_asset_id {
         let offset = -old_transaction.amount;
 
         if let Err(e) = update_asset_balance(&pool, to_asset_id, offset).await {
-            eprintln!("Failed to update to_asset balance: {:?}", e);
+            eprintln!("Failed to revert to_asset balance on delete: {:?}", e);
         }
     }
 
@@ -203,13 +228,16 @@ pub async fn delete_transaction_handler(
         offset += old_transaction.fee;
 
         if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
-            eprintln!("Failed to update from_asset balance: {:?}", e);
+            eprintln!("Failed to revert from_asset balance on delete: {:?}", e);
         }
     }
 
     match delete_transaction(&pool, transaction_id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Failed to delete transaction {}: {:?}", transaction_id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 

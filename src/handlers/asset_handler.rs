@@ -31,7 +31,10 @@ pub struct UpdateAssetRequest {
 pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_assets(&pool).await {
         Ok(assets) => AssetList(assets).into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Failed to fetch all assets: {:#?}", err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -41,7 +44,10 @@ pub async fn get_asset_handler(
 ) -> impl IntoResponse {
     match get_asset_by_user_id(&pool, user_id).await {
         Ok(assets) => AssetList(assets).into_response(),
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => {
+            eprintln!("Failed to fetch assets for user {}: {:#?}", user_id, err);
+            StatusCode::NOT_FOUND.into_response()
+        }
     }
 }
 
@@ -58,7 +64,13 @@ pub async fn add_asset_handler(
     .await
     {
         Ok(asset) => asset.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!(
+                "Failed to create asset for account {}: {:#?}",
+                payload.account_id, err
+            );
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -69,7 +81,10 @@ pub async fn update_asset_handler(
 ) -> impl IntoResponse {
     match update_asset_info(&pool, asset_id, payload.asset_type, payload.balance).await {
         Ok(asset) => asset.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Failed to update asset {}: {:#?}", asset_id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -79,6 +94,9 @@ pub async fn delete_asset_handler(
 ) -> impl IntoResponse {
     match delete_asset(&pool, asset_id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Failed to delete asset {}: {:#?}", asset_id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }

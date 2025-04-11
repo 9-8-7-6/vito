@@ -65,10 +65,13 @@ pub async fn add_recurring_transaction_handler(
     .await
     {
         Ok(transaction) => (StatusCode::CREATED, Json(transaction)),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(dummy_recurring_transaction()),
-        ),
+        Err(err) => {
+            eprintln!("Failed to create recurring transaction: {:#?}", err);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(dummy_recurring_transaction()),
+            )
+        }
     }
 }
 
@@ -88,10 +91,16 @@ pub async fn update_recurring_transaction_handler(
     .await
     {
         Ok(transaction) => (StatusCode::OK, Json(transaction)),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(dummy_recurring_transaction()),
-        ),
+        Err(err) => {
+            eprintln!(
+                "Failed to update recurring transaction {}: {:#?}",
+                transaction_id, err
+            );
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(dummy_recurring_transaction()),
+            )
+        }
     }
 }
 
@@ -101,7 +110,13 @@ pub async fn delete_recurring_transaction_handler(
 ) -> StatusCode {
     match delete_recurring_transaction(&pool, transaction_id).await {
         Ok(_) => StatusCode::NO_CONTENT,
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        Err(err) => {
+            eprintln!(
+                "Failed to delete recurring transaction {}: {:#?}",
+                transaction_id, err
+            );
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
 }
 

@@ -58,7 +58,10 @@ impl User {
             Ok(parsed_hash) => Argon2::default()
                 .verify_password(password.as_bytes(), &parsed_hash)
                 .is_ok(),
-            Err(_) => false,
+            Err(err) => {
+                eprintln!("Invalid password hash format: {:?}", err);
+                false
+            }
         }
     }
 }
@@ -158,7 +161,10 @@ impl AuthnBackend for Backend {
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
         match get_user_by_id(&self.db, user_id.clone()).await {
             Ok(user) => Ok(user),
-            Err(_) => Ok(None),
+            Err(err) => {
+                eprintln!("get_user error: {:?}", err);
+                Ok(None)
+            }
         }
     }
 }

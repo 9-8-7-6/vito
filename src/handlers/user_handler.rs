@@ -39,8 +39,14 @@ pub async fn get_user_handler(
 ) -> Result<Json<User>, StatusCode> {
     match get_user_by_id(&pool, user_id).await {
         Ok(Some(user)) => Ok(Json(user)),
-        Ok(Option::None) => Err(StatusCode::NOT_FOUND),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Ok(None) => {
+            eprintln!("User {} not found.", user_id);
+            Err(StatusCode::NOT_FOUND)
+        }
+        Err(err) => {
+            eprintln!("Error fetching user {}: {:?}", user_id, err);
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
     }
 }
 
@@ -50,7 +56,10 @@ pub async fn add_user_handler(
 ) -> (StatusCode, Json<User>) {
     let hashed_password = match User::hash_password(&payload.password) {
         Ok(hash) => hash,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
+        Err(err) => {
+            eprintln!("Password hashing failed: {:?}", err);
+            return (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_user()));
+        }
     };
 
     match create_user(
@@ -63,7 +72,10 @@ pub async fn add_user_handler(
     .await
     {
         Ok(user) => (StatusCode::CREATED, Json(user)),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
+        Err(err) => {
+            eprintln!("Failed to create user: {:?}", err);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_user()))
+        }
     }
 }
 
@@ -75,7 +87,10 @@ pub async fn update_user_handler(
     let hashed_password = if let Some(password) = &payload.password {
         match User::hash_password(password) {
             Ok(hash) => Some(hash),
-            Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
+            Err(err) => {
+                eprintln!("Password hashing failed: {:?}", err);
+                return (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_user()));
+            }
         }
     } else {
         None
@@ -93,7 +108,10 @@ pub async fn update_user_handler(
     .await
     {
         Ok(user) => (StatusCode::OK, Json(user)),
-        Err(_) => (StatusCode::INTERNAL_SERVER_ERROR, Json(User::default())),
+        Err(err) => {
+            eprintln!("Failed to update user {}: {:?}", user_id, err);
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(dummy_user()))
+        }
     }
 }
 
@@ -103,7 +121,17 @@ pub async fn delete_user_handler(
 ) -> StatusCode {
     match delete_user(&pool, user_id).await {
         Ok(_) => StatusCode::NO_CONTENT,
-        Err(sqlx::Error::RowNotFound) => StatusCode::NOT_FOUND,
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        Err(sqlx::Error::RowNotFound) => {
+            eprintln!("User {} not found for deletion.", user_id);
+            StatusCode::NOT_FOUND
+        }
+        Err(err) => {
+            eprintln!("Failed to delete user {}: {:?}", user_id, err);
+            StatusCode::INTERNAL_SERVER_ERROR
+        }
     }
+}
+
+fn dummy_user() -> User {
+    User::default()
 }

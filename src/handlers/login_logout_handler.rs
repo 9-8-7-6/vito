@@ -102,7 +102,8 @@ pub async fn api_login(
                 "message": "Invalid account,please register first."
             })));
         }
-        Err(_) => {
+        Err(err) => {
+            eprintln!("Handler failed: {:#?}", err);
             return Ok(Json(json!({
                 "status": "fail",
                 "message": "Something wrong happens, please check again."

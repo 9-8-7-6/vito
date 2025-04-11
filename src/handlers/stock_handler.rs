@@ -37,7 +37,13 @@ pub async fn get_stock_holdings_by_account_handler(
 ) -> impl IntoResponse {
     match get_stock_holdings_by_account_id(&pool, account_id).await {
         Ok(holdings) => StockHoldingList(holdings).into_response(),
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => {
+            eprintln!(
+                "Error fetching stock holdings by account {}: {:#?}",
+                account_id, err
+            );
+            StatusCode::NOT_FOUND.into_response()
+        }
     }
 }
 
@@ -55,7 +61,13 @@ pub async fn create_stock_holding_handler(
     .await
     {
         Ok(holding) => holding.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!(
+                "Error creating stock holding for account {} and stock {}: {:#?}",
+                payload.account_id, payload.stock_id, err
+            );
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -66,7 +78,10 @@ pub async fn update_stock_holding_handler(
 ) -> impl IntoResponse {
     match update_stock_holding_info(&pool, id, payload.quantity, payload.average_price).await {
         Ok(holding) => holding.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Error updating stock holding {}: {:#?}", id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -76,7 +91,10 @@ pub async fn delete_stock_holding_handler(
 ) -> impl IntoResponse {
     match delete_stock_holding(&pool, id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Error deleting stock holding {}: {:#?}", id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -97,7 +115,10 @@ pub struct UpdateStockMetadataRequest {
 pub async fn get_all_stock_metadata_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_all_stock_metadata(&pool).await {
         Ok(records) => StockMetadataList(records).into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Error fetching all stock metadata: {:#?}", err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -107,7 +128,10 @@ pub async fn get_stock_metadata_by_id_handler(
 ) -> impl IntoResponse {
     match get_stock_metadata_by_id(&pool, id).await {
         Ok(record) => record.into_response(),
-        Err(_) => StatusCode::NOT_FOUND.into_response(),
+        Err(err) => {
+            eprintln!("Error fetching stock metadata by ID {}: {:#?}", id, err);
+            StatusCode::NOT_FOUND.into_response()
+        }
     }
 }
 
@@ -126,7 +150,10 @@ pub async fn update_stock_metadata_handler(
     .await
     {
         Ok(metadata) => metadata.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Error updating stock metadata {}: {:#?}", id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
 
@@ -136,6 +163,9 @@ pub async fn delete_stock_metadata_handler(
 ) -> impl IntoResponse {
     match delete_stock_metadata(&pool, id).await {
         Ok(_) => StatusCode::NO_CONTENT.into_response(),
-        Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+        Err(err) => {
+            eprintln!("Error deleting stock metadata {}: {:#?}", id, err);
+            StatusCode::INTERNAL_SERVER_ERROR.into_response()
+        }
     }
 }
