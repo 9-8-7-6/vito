@@ -20,7 +20,7 @@ use crate::repository::{
 #[derive(Deserialize)]
 pub struct CreateStockHoldingRequest {
     pub account_id: Uuid,
-    pub ticker_symble: Uuid,
+    pub stock_id: Uuid,
     pub quantity: Decimal,
     pub average_price: Decimal,
 }
@@ -54,7 +54,7 @@ pub async fn create_stock_holding_handler(
     match create_stock_holding(
         &pool,
         payload.account_id,
-        payload.ticker_symble,
+        payload.stock_id,
         payload.quantity,
         payload.average_price,
     )

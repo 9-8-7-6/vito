@@ -4,11 +4,22 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 use uuid::Uuid;
 
-use crate::models::{StockHolding, StockInfo, StockMetadata};
+use crate::models::{StockHolding, StockHoldingResponse, StockInfo, StockMetadata};
 
-const QUERY_SELECT_BY_ACCOUNT_ID: &str = "SELECT * FROM stock_holdings WHERE account_id = $1";
+const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
+    SELECT 
+        stock_holdings.*, 
+        stock_metadata.ticker_symbol,
+        stock_infos.closing_price AS current_price
+    FROM stock_holdings
+    JOIN stock_metadata 
+        ON stock_metadata.id = stock_holdings.stock_id
+    JOIN stock_infos 
+        ON stock_infos.ticker_symbol = stock_metadata.ticker_symbol
+    WHERE stock_holdings.account_id = $1
+"#;
 const QUERY_INSERT: &str = "
-    INSERT INTO stock_holdings (id, account_id, ticker_symble, quantity, average_price, created_at, updated_at)
+    INSERT INTO stock_holdings (id, account_id, stock_id, quantity, average_price, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *
 ";
@@ -17,8 +28,8 @@ const QUERY_DELETE: &str = "DELETE FROM stock_holdings WHERE id = $1";
 pub async fn get_stock_holdings_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
-) -> Result<Vec<StockHolding>, sqlx::Error> {
-    sqlx::query_as::<_, StockHolding>(QUERY_SELECT_BY_ACCOUNT_ID)
+) -> Result<Vec<StockHoldingResponse>, sqlx::Error> {
+    sqlx::query_as::<_, StockHoldingResponse>(QUERY_SELECT_BY_ACCOUNT_ID)
         .bind(account_id)
         .fetch_all(pool)
         .await
@@ -27,14 +38,14 @@ pub async fn get_stock_holdings_by_account_id(
 pub async fn create_stock_holding(
     pool: &PgPool,
     account_id: Uuid,
-    ticker_symble: Uuid,
+    stock_id: Uuid,
     quantity: Decimal,
     average_price: Decimal,
 ) -> Result<StockHolding, sqlx::Error> {
     sqlx::query_as::<_, StockHolding>(QUERY_INSERT)
         .bind(Uuid::new_v4())
         .bind(account_id)
-        .bind(ticker_symble)
+        .bind(stock_id)
         .bind(quantity)
         .bind(average_price)
         .bind(Utc::now())

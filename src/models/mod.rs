@@ -9,7 +9,8 @@ pub use account::{Account, AccountList};
 pub use asset::{Asset, AssetList};
 pub use recurring_transaction::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 pub use stock::{
-    StockHolding, StockHoldingList, StockInfo, StockInfoList, StockMetadata, StockMetadataList,
+    StockHolding, StockHoldingList, StockHoldingResponse, StockInfo, StockInfoList, StockMetadata,
+    StockMetadataList,
 };
 pub use transaction::{
     EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionList, TransactionType,

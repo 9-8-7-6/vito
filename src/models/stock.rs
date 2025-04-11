@@ -9,11 +9,24 @@ use uuid::Uuid;
 pub struct StockHolding {
     pub id: Uuid,
     pub account_id: Uuid,
-    pub ticker_symble: Uuid,
+    pub stock_id: Uuid,
     pub quantity: Decimal,
     pub average_price: Decimal,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct StockHoldingResponse {
+    pub id: Uuid,
+    pub account_id: Uuid,
+    pub stock_id: Uuid,
+    pub quantity: Decimal,
+    pub average_price: Decimal,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub ticker_symbol: String,
+    pub current_price: String,
 }
 
 impl IntoResponse for StockHolding {
@@ -23,7 +36,7 @@ impl IntoResponse for StockHolding {
 }
 
 #[derive(Debug, Serialize)]
-pub struct StockHoldingList(pub Vec<StockHolding>);
+pub struct StockHoldingList(pub Vec<StockHoldingResponse>);
 
 impl IntoResponse for StockHoldingList {
     fn into_response(self) -> axum::response::Response {
