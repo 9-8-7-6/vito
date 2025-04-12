@@ -35,4 +35,4 @@ REDIS_URL=redis://127.0.0.1:6379
 SECRET_KEY=vito
 EOF
 
-echo "✅ .env file generated successfully."
+echo ".env file generated successfully."

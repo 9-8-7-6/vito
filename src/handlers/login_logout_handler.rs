@@ -28,32 +28,33 @@ pub async fn api_register(
     State(backend): State<Backend>,
     payload: Json<RegisterPayload>,
 ) -> Result<Json<Value>, StatusCode> {
-    if backend
-        .get_user_by_username(&payload.username)
-        .await
-        .unwrap_or(None)
-        .is_some()
-    {
+    if let Ok(Some(_)) = backend.get_user_by_username(&payload.username).await {
         return Ok(Json(json!({
             "status": "fail",
-            "message": "Username already exists"
+            "message": "Username already exists",
+            "code": 409
         })));
     }
 
-    if backend
-        .get_user_by_email(&payload.email)
-        .await
-        .unwrap_or(None)
-        .is_some()
-    {
+    if let Ok(Some(_)) = backend.get_user_by_email(&payload.email).await {
         return Ok(Json(json!({
             "status": "fail",
-            "message": "Email already registered"
+            "message": "Email already registered",
+            "code": 409
         })));
     }
 
-    let hashed_password =
-        User::hash_password(&payload.password).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let hashed_password = match User::hash_password(&payload.password) {
+        Ok(hash) => hash,
+        Err(err) => {
+            eprintln!("Password hashing failed: {:?}", err);
+            return Ok(Json(json!({
+                "status": "fail",
+                "message": "Internal error while hashing password",
+                "code": 500
+            })));
+        }
+    };
 
     let new_user = User {
         id: Uuid::new_v4(),
@@ -67,15 +68,26 @@ pub async fn api_register(
         date_joined: chrono::Utc::now(),
     };
 
-    backend
-        .create_user_(&new_user)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if let Err(err) = backend.create_user_(&new_user).await {
+        eprintln!("Failed to create user: {:?}", err);
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Failed to create user",
+            "code": 500
+        })));
+    }
 
-    backend
-        .create_account_(&new_user)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if let Err(err) = backend.create_account_(&new_user).await {
+        eprintln!(
+            "Failed to create account for user {}: {:?}",
+            new_user.id, err
+        );
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Failed to create account",
+            "code": 500
+        })));
+    }
 
     Ok(Json(json!({
         "status": "success",
@@ -96,28 +108,39 @@ pub async fn api_login(
 
     let user = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
-        Ok(Option::None) => {
+        Ok(None) => {
+            eprintln!(
+                "Login failed: invalid credentials for '{}'",
+                payload.username
+            );
             return Ok(Json(json!({
                 "status": "fail",
-                "message": "Invalid account,please register first."
+                "message": "Invalid account or password",
+                "code": 401
             })));
         }
         Err(err) => {
-            eprintln!("Handler failed: {:#?}", err);
+            eprintln!("Authentication error: {:?}", err);
             return Ok(Json(json!({
                 "status": "fail",
-                "message": "Something wrong happens, please check again."
+                "message": "Internal server error during login",
+                "code": 500
             })));
         }
     };
 
-    session
-        .insert("user_id", user.id.to_string())
-        .await
-        .expect(&format!("Failed to insert user {} session", user.id));
+    if let Err(err) = session.insert("user_id", user.id.to_string()).await {
+        eprintln!("Failed to insert session for user {}: {:?}", user.id, err);
+        return Ok(Json(json!({
+            "status": "fail",
+            "message": "Failed to set session",
+            "code": 500
+        })));
+    }
 
     println!(
-        "Insert session {:?} into redis",
+        "Inserted session for user {}: {:?}",
+        user.id,
         session.get::<String>("user_id").await
     );
 

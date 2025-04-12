@@ -23,7 +23,7 @@ pub async fn init_db(database_url: &str) -> PgPool {
         Err(e) => eprintln!("Migration error: {}", e),
     }
 
-    println!("✅ Database migrations applied successfully!");
+    println!("Database migrations applied successfully!");
 
     pool
 }
@@ -35,8 +35,8 @@ pub async fn init_redis(redis_url: &str) -> SessionManagerLayer<RedisStore<Pool>
     let redis_conn = pool.connect();
 
     match pool.wait_for_connect().await {
-        Ok(_) => println!("✅ Redis connected successfully, Result {:?}!", redis_conn),
-        Err(e) => panic!("❌ Failed to connect to Redis: {:?}", e),
+        Ok(_) => println!("Redis connected successfully, Result {:?}!", redis_conn),
+        Err(e) => panic!("Failed to connect to Redis: {:?}", e),
     }
 
     let session_store = RedisStore::new(pool);
