@@ -7,7 +7,7 @@ use sqlx::PgPool;
 use std::{str::FromStr, time::Duration};
 use tokio::time::sleep;
 
-pub async fn update_stock_metadata_if_first_day(
+pub async fn update_stock_metadata_every_month(
     pool: &PgPool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if let Err(e) = run_stock_metadata_job(pool).await {

@@ -1,6 +1,6 @@
 -- Add up migration script here
 -- Create Transaction table
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_asset_id UUID NULL REFERENCES assets(id) ON DELETE CASCADE,
     to_asset_id UUID NULL REFERENCES assets(id) ON DELETE CASCADE,

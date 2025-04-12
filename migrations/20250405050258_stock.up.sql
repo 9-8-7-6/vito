@@ -1,5 +1,5 @@
 -- Add up migration script here
-CREATE TABLE stock_metadata (
+CREATE TABLE IF NOT EXISTS stock_metadata (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country VARCHAR(2) NOT NULL,
     ticker_symbol VARCHAR(20) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE stock_metadata (
     is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE stock_holdings (
+CREATE TABLE IF NOT EXISTS stock_holdings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id UUID NOT NULL REFERENCES accounts ON DELETE CASCADE,
     stock_id UUID NOT NULL REFERENCES stock_metadata(id) ON DELETE CASCADE,
@@ -19,7 +19,7 @@ CREATE TABLE stock_holdings (
     UNIQUE (account_id, stock_id)
 );
 
-CREATE TABLE stock_infos (
+CREATE TABLE IF NOT EXISTS stock_infos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     country TEXT NOT NULL,
     ticker_symbol TEXT NOT NULL,
