@@ -4,7 +4,8 @@ CREATE TABLE stock_metadata (
     country VARCHAR(2) NOT NULL,
     ticker_symbol VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    UNIQUE (country, ticker_symbol)
+    UNIQUE (country, ticker_symbol),
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE TABLE stock_holdings (
@@ -29,5 +30,6 @@ CREATE TABLE stock_infos (
     lowest_price TEXT NOT NULL,
     closing_price TEXT NOT NULL,
     change TEXT NOT NULL,
-    transaction TEXT NOT NULL
+    transaction TEXT NOT NULL,
+    UNIQUE (country, ticker_symbol)
 );

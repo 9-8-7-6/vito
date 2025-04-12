@@ -1,5 +1,5 @@
 use crate::api::stock::call_stock_metadata_api;
-use crate::repository::{create_stock_metadata, delete_all_stock_metadata};
+use crate::repository::create_or_update_stock_metadata;
 
 use chrono::Utc;
 use cron::Schedule;
@@ -23,6 +23,8 @@ pub async fn update_stock_metadata_if_first_day(
             let now = Utc::now();
             let duration_secs = (next - now).num_seconds().max(0) as u64;
 
+            println!("Next stock info update scheduled at: {}", next);
+
             sleep(Duration::from_secs(duration_secs)).await;
 
             if let Err(e) = run_stock_metadata_job(pool).await {
@@ -35,9 +37,7 @@ pub async fn update_stock_metadata_if_first_day(
 async fn run_stock_metadata_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
     let datas = call_stock_metadata_api().await?;
 
-    delete_all_stock_metadata(pool).await?;
-
-    create_stock_metadata(pool, datas).await?;
+    create_or_update_stock_metadata(pool, datas).await?;
     println!("Fetching stock metadata successfully");
     Ok(())
 }

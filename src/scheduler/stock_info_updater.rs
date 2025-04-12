@@ -1,5 +1,5 @@
 use crate::api::stock::call_stock_info_api;
-use crate::repository::{delete_all_stock_infos, insert_stock_infos};
+use crate::repository::create_or_insert_stock_infos;
 
 use chrono::Utc;
 use cron::Schedule;
@@ -12,7 +12,7 @@ pub async fn update_stock_info_every_day(pool: &PgPool) -> Result<(), Box<dyn st
         eprintln!("Initial stock info update failed: {}", e);
     }
 
-    let expression = "0 0 0 1 * * *";
+    let expression = "0 0 0 * * *";
     let schedule = Schedule::from_str(expression)?;
 
     loop {
@@ -34,8 +34,7 @@ pub async fn update_stock_info_every_day(pool: &PgPool) -> Result<(), Box<dyn st
 async fn run_stock_info_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
     let datas = call_stock_info_api().await?;
 
-    delete_all_stock_infos(pool).await?;
-    insert_stock_infos(pool, datas).await?;
+    create_or_insert_stock_infos(pool, datas).await?;
 
     println!("Fetching stock info successfully.");
     Ok(())

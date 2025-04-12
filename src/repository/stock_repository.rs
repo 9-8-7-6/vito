@@ -100,10 +100,13 @@ pub async fn delete_stock_holding(
 
 const QUERY_METADATA_SELECT_ALL: &str = "SELECT * FROM stock_metadata";
 const QUERY_METADATA_SELECT_BY_ID: &str = "SELECT * FROM stock_metadata WHERE id = $1";
-const QUERY_METADATA_INSERT: &str = "
-    INSERT INTO stock_metadata (id, country, ticker_symbol, name)
-    VALUES ($1, $2, $3, $4)
-    RETURNING *
+const QUERY_METADATA_UPSERT: &str = "
+    INSERT INTO stock_metadata (id, country, ticker_symbol, name, is_active)
+    VALUES ($1, $2, $3, $4, TRUE)
+    ON CONFLICT (country, ticker_symbol)
+    DO UPDATE SET 
+        name = EXCLUDED.name,
+        is_active = TRUE
 ";
 const QUERY_METADATA_DELETE_ALL: &str = "DELETE FROM stock_metadata";
 const QUERY_METADATA_DELETE: &str = "DELETE FROM stock_metadata WHERE id = $1";
@@ -124,9 +127,12 @@ pub async fn get_stock_metadata_by_id(
         .await
 }
 
-pub async fn create_stock_metadata(pool: &PgPool, datas: Vec<Metadata>) -> Result<(), sqlx::Error> {
+pub async fn create_or_update_stock_metadata(
+    pool: &PgPool,
+    datas: Vec<Metadata>,
+) -> Result<(), sqlx::Error> {
     for data in datas {
-        sqlx::query(QUERY_METADATA_INSERT)
+        sqlx::query(QUERY_METADATA_UPSERT)
             .bind(Uuid::new_v4())
             .bind(data.country)
             .bind(data.ticker_symbol)
@@ -203,7 +209,7 @@ pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error>
         .map(|_| ())
 }
 
-const QUERY_INSERT_STOCK_INFO: &str = "
+const QUERY_UPSERT_STOCK_INFO: &str = "
     INSERT INTO stock_infos (
         country, ticker_symbol, company_name, trade_volume,
         trade_value, opening_price, highest_price, lowest_price,
@@ -214,13 +220,25 @@ const QUERY_INSERT_STOCK_INFO: &str = "
         $5, $6, $7, $8,
         $9, $10, $11
     )
-    RETURNING *
+    ON CONFLICT (country, ticker_symbol)
+    DO UPDATE SET 
+        company_name = EXCLUDED.company_name,
+        trade_volume = EXCLUDED.trade_volume,
+        trade_value = EXCLUDED.trade_value,
+        opening_price = EXCLUDED.opening_price,
+        highest_price = EXCLUDED.highest_price,
+        lowest_price = EXCLUDED.lowest_price,
+        closing_price = EXCLUDED.closing_price,
+        change = EXCLUDED.change,
+        transaction = EXCLUDED.transaction
 ";
-const QUERY_DELETE_ALL_STOCK_INFOS: &str = "DELETE FROM stock_infos";
 
-pub async fn insert_stock_infos(pool: &PgPool, infos: Vec<StockInfo>) -> Result<(), sqlx::Error> {
+pub async fn create_or_insert_stock_infos(
+    pool: &PgPool,
+    infos: Vec<StockInfo>,
+) -> Result<(), sqlx::Error> {
     for info in infos {
-        sqlx::query(QUERY_INSERT_STOCK_INFO)
+        sqlx::query(QUERY_UPSERT_STOCK_INFO)
             .bind(info.country)
             .bind(info.ticker_symbol)
             .bind(info.company_name)
@@ -236,11 +254,4 @@ pub async fn insert_stock_infos(pool: &PgPool, infos: Vec<StockInfo>) -> Result<
             .await?;
     }
     Ok(())
-}
-
-pub async fn delete_all_stock_infos(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(QUERY_DELETE_ALL_STOCK_INFOS)
-        .execute(pool)
-        .await
-        .map(|_| ())
 }
