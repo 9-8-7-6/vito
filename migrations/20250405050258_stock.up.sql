@@ -15,7 +15,8 @@ CREATE TABLE stock_holdings (
     quantity NUMERIC(20, 4) DEFAULT 0 NOT NULL,
     average_price NUMERIC(20, 4) DEFAULT 0 NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (account_id, stock_id)
 );
 
 CREATE TABLE stock_infos (

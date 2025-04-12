@@ -10,6 +10,7 @@ const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
     SELECT 
         stock_holdings.*, 
         stock_metadata.ticker_symbol,
+        stock_infos.company_name,
         stock_infos.closing_price AS current_price
     FROM stock_holdings
     JOIN stock_metadata 
@@ -18,10 +19,20 @@ const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
         ON stock_infos.ticker_symbol = stock_metadata.ticker_symbol
     WHERE stock_holdings.account_id = $1
 "#;
-const QUERY_INSERT: &str = "
+const QUERY_STOCK_ID_FROM_STOCK_METADATA: &str =
+    "SELECT id FROM stock_metadata WHERE country = $1 AND ticker_symbol = $2 AND is_active = TRUE";
+const QUERY_INSERT_OR_UPDATE: &str = "
     INSERT INTO stock_holdings (id, account_id, stock_id, quantity, average_price, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING *
+    ON CONFLICT (account_id, stock_id)
+    DO UPDATE SET
+        quantity = stock_holdings.quantity + EXCLUDED.quantity,
+        average_price = (
+            (stock_holdings.quantity * stock_holdings.average_price) + 
+            (EXCLUDED.quantity * EXCLUDED.average_price)
+        ) / (stock_holdings.quantity + EXCLUDED.quantity),
+        updated_at = EXCLUDED.updated_at
+    RETURNING *;
 ";
 const QUERY_DELETE: &str = "DELETE FROM stock_holdings WHERE id = $1";
 
@@ -38,11 +49,20 @@ pub async fn get_stock_holdings_by_account_id(
 pub async fn create_stock_holding(
     pool: &PgPool,
     account_id: Uuid,
-    stock_id: Uuid,
+    country: String,
+    ticker_symbol: &String,
     quantity: Decimal,
     average_price: Decimal,
 ) -> Result<StockHolding, sqlx::Error> {
-    sqlx::query_as::<_, StockHolding>(QUERY_INSERT)
+    let stock_id = sqlx::query(QUERY_STOCK_ID_FROM_STOCK_METADATA)
+        .bind(country)
+        .bind(ticker_symbol)
+        .fetch_optional(pool)
+        .await?
+        .map(|row| row.get::<Uuid, _>("id"))
+        .ok_or(sqlx::Error::RowNotFound)?;
+
+    sqlx::query_as::<_, StockHolding>(QUERY_INSERT_OR_UPDATE)
         .bind(Uuid::new_v4())
         .bind(account_id)
         .bind(stock_id)

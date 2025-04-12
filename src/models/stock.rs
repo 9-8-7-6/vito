@@ -21,6 +21,7 @@ pub struct StockHoldingResponse {
     pub id: Uuid,
     pub account_id: Uuid,
     pub stock_id: Uuid,
+    pub company_name: String,
     pub quantity: Decimal,
     pub average_price: Decimal,
     pub created_at: DateTime<Utc>,

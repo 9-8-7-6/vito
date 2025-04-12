@@ -11,7 +11,7 @@ use crate::handlers::stock_handler::*;
 pub fn stock_routes(state: Arc<PgPool>) -> Router {
     Router::new()
         .route(
-            "/stock-holdings/account/{account_id}",
+            "/stock-holding/account/{account_id}",
             get(get_stock_holdings_by_account_handler),
         )
         .route("/stock-holding", post(create_stock_holding_handler))
