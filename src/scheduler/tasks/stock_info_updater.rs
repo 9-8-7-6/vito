@@ -1,4 +1,4 @@
-use crate::api::stock::call_stock_info_api;
+use super::super::api::stock_info::call_stock_info_api;
 use crate::repository::create_or_insert_stock_infos;
 
 use chrono::Utc;

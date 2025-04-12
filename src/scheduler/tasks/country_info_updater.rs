@@ -1,4 +1,4 @@
-use crate::api::country::call_country_info_api;
+use super::super::api::country_info::call_country_info_api;
 use crate::repository::upsert_country;
 
 use chrono::Utc;

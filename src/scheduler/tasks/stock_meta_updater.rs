@@ -1,4 +1,4 @@
-use crate::api::stock::call_stock_metadata_api;
+use super::super::api::stock_metadata::call_stock_metadata_api;
 use crate::repository::create_or_update_stock_metadata;
 
 use chrono::Utc;

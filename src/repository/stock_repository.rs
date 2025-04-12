@@ -1,4 +1,4 @@
-use crate::api::stock::stock_metadata::Metadata;
+use crate::scheduler::api::stock_metadata::Metadata;
 use chrono::Utc;
 use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Row};

@@ -1,4 +1,3 @@
-mod api;
 mod db;
 mod handlers;
 mod models;

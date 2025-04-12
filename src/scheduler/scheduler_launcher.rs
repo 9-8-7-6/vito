@@ -1,4 +1,4 @@
-use super::{
+use super::tasks::{
     country_info_updater::update_country_info_every_month,
     stock_info_updater::update_stock_info_every_day,
     stock_meta_updater::update_stock_metadata_every_month,
