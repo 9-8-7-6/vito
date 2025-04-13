@@ -28,6 +28,8 @@ pub struct User {
     pub is_active: bool,
     pub date_joined: DateTime<Utc>,
     pub hashed_password: String,
+    pub country: Option<String>,
+    pub timezone: Option<String>,
 }
 
 impl AuthUser for User {

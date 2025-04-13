@@ -66,6 +66,8 @@ pub async fn api_register(
         is_staff: false,
         is_active: true,
         date_joined: chrono::Utc::now(),
+        country: None,
+        timezone: None,
     };
 
     if let Err(err) = backend.create_user_(&new_user).await {

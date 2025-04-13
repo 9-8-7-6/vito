@@ -26,6 +26,8 @@ pub struct UpdateuserRequest {
     pub last_name: Option<String>,
     pub email: Option<String>,
     pub password: Option<String>,
+    pub country: Option<String>,
+    pub timezone: Option<String>,
 }
 
 pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
@@ -103,6 +105,8 @@ pub async fn update_user_handler(
         payload.first_name.as_deref(),
         payload.last_name.as_deref(),
         payload.email.as_deref(),
+        payload.country.as_deref(),
+        payload.timezone.as_deref(),
         hashed_password.as_deref(),
     )
     .await

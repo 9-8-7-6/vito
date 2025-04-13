@@ -83,12 +83,16 @@ pub async fn update_user_info(
     first_name: Option<&str>,
     last_name: Option<&str>,
     email: Option<&str>,
+    country: Option<&str>,
+    timezone: Option<&str>,
     hashed_password: Option<&str>,
 ) -> Result<User, sqlx::Error> {
     if username.is_none()
         && first_name.is_none()
         && last_name.is_none()
         && email.is_none()
+        && country.is_none()
+        && timezone.is_none()
         && hashed_password.is_none()
     {
         return Err(sqlx::Error::RowNotFound);
@@ -113,6 +117,16 @@ pub async fn update_user_info(
 
     if let Some(email) = email {
         builder.push("email = ").push_bind(email);
+        builder.push(", ");
+    }
+
+    if let Some(country) = country {
+        builder.push("country = ").push_bind(country);
+        builder.push(", ");
+    }
+
+    if let Some(timezone) = timezone {
+        builder.push("timezone = ").push_bind(timezone);
         builder.push(", ");
     }
 

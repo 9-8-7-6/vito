@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
     date_joined TIMESTAMPTZ DEFAULT now(),
     hashed_password VARCHAR(255) NOT NULL,
     country VARCHAR(100),
-    region VARCHAR(100)
+    timezone VARCHAR(100),
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE UNIQUE INDEX idx_users_email_lower ON users (LOWER(email));
