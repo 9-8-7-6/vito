@@ -13,7 +13,7 @@ pub use asset_repository::{
     create_asset, delete_asset, get_asset_by_user_id, get_asset_type_by_asset_id, get_assets,
     update_asset_balance, update_asset_info,
 };
-pub use country_repository::upsert_country;
+pub use country_repository::{fetch_all_countries, upsert_country};
 pub use recurring_transaction_repository::{
     create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
     get_recurring_transactions, update_recurring_transaction_info,

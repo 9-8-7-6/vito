@@ -28,9 +28,9 @@ use crate::models::Backend;
 use scheduler::start_all_schedulers;
 
 use routes::{
-    account_routes::account_routes, asset_routes::asset_routes, login_logout_routes::login_routes,
-    recurring_transaction_routes::recurringtransaction_routes, stock_routes::stock_routes,
-    transaction_routes::transaction_routes, user_routes::user_routes,
+    account_routes::account_routes, asset_routes::asset_routes, country_routes::country_routes,
+    login_logout_routes::login_routes, recurring_transaction_routes::recurringtransaction_routes,
+    stock_routes::stock_routes, transaction_routes::transaction_routes, user_routes::user_routes,
 };
 
 struct Url {
@@ -101,6 +101,7 @@ async fn main() {
         .merge(recurringtransaction_routes(state.clone()))
         .merge(transaction_routes(state.clone()))
         .merge(stock_routes(state.clone()))
+        .merge(country_routes(state.clone()))
         .merge(login_routes(backend.clone()))
         .layer(cors)
         .layer(CookieManagerLayer::new())

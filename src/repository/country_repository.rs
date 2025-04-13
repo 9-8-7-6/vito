@@ -3,8 +3,9 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder, Row};
 use uuid::Uuid;
 
-use crate::models::Country;
+use crate::models::{Country, CountryList};
 
+const QUERY_ALL_COUNTRIES_INFO: &str = "SELECT * FROM countries";
 const QUERY_INSERT_OR_UPDATE_COUNTRY: &str = r#"
     INSERT INTO countries (id, code, name, region, subregion, timezone, flag_url)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -15,6 +16,14 @@ const QUERY_INSERT_OR_UPDATE_COUNTRY: &str = r#"
         timezone = EXCLUDED.timezone,
         flag_url = EXCLUDED.flag_url;
 "#;
+
+pub async fn fetch_all_countries(pool: &PgPool) -> Result<CountryList, sqlx::Error> {
+    let countries = sqlx::query_as::<_, Country>(QUERY_ALL_COUNTRIES_INFO)
+        .fetch_all(pool)
+        .await?;
+
+    Ok(CountryList(countries))
+}
 
 pub async fn upsert_country(pool: &PgPool, datas: Vec<Country>) -> Result<(), sqlx::Error> {
     for data in datas {
