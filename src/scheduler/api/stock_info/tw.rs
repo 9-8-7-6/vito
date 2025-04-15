@@ -1,6 +1,7 @@
-use crate::models::StockInfo;
 use reqwest::Client;
 use serde::Deserialize;
+use crate::models::StockInfo;
+
 #[derive(Debug, Deserialize)]
 struct StockApiResponse {
     #[serde(rename = "Code")]

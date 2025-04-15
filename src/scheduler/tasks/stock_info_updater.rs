@@ -1,4 +1,4 @@
-use super::super::api::stock_info::call_stock_info_api;
+use super::super::api::stock_info::fetch_stock_info_by_country;
 use crate::repository::create_or_insert_stock_infos;
 
 use chrono::Utc;
@@ -32,7 +32,7 @@ pub async fn update_stock_info_every_day(pool: &PgPool) -> Result<(), Box<dyn st
 }
 
 async fn run_stock_info_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
-    let datas = call_stock_info_api().await?;
+    let datas = fetch_stock_info_by_country("TW").await?;
 
     create_or_insert_stock_infos(pool, datas).await?;
 
