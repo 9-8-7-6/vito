@@ -1,12 +1,6 @@
+use crate::scheduler::api::stock_metadata::common::Metadata;
 use reqwest::Client;
 use serde::Deserialize;
-
-#[derive(Debug)]
-pub struct Metadata {
-    pub country: String,
-    pub ticker_symbol: String,
-    pub company_name: String,
-}
 
 #[derive(Debug, Deserialize)]
 struct StockApiResponse {
@@ -36,14 +30,14 @@ pub async fn call_stock_metadata_api() -> Result<Vec<Metadata>, Box<dyn std::err
         }
     };
 
-    let mut result = Vec::new();
-
-    for data in json_data {
-        result.push(Metadata {
+    let result = json_data
+        .into_iter()
+        .map(|data| Metadata {
             country: "TW".to_string(),
             ticker_symbol: data.ticker_symbol,
             company_name: data.company_name,
-        });
-    }
+        })
+        .collect();
+
     Ok(result)
 }

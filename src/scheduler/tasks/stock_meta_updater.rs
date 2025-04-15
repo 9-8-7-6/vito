@@ -1,4 +1,4 @@
-use super::super::api::stock_metadata::call_stock_metadata_api;
+use super::super::api::stock_metadata::fetch_stock_metadata_by_country;
 use crate::repository::create_or_update_stock_metadata;
 
 use chrono::Utc;
@@ -35,7 +35,7 @@ pub async fn update_stock_metadata_every_month(
 }
 
 async fn run_stock_metadata_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
-    let datas = call_stock_metadata_api().await?;
+    let datas = fetch_stock_metadata_by_country("TW").await?;
 
     create_or_update_stock_metadata(pool, datas).await?;
     println!("Fetching stock metadata successfully");
