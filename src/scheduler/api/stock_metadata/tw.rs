@@ -11,7 +11,7 @@ struct StockApiResponse {
     company_name: String,
 }
 
-pub async fn call_stock_metadata_api() -> Result<Vec<Metadata>, Box<dyn std::error::Error>> {
+pub async fn call_twse_metadata_api() -> Result<Vec<Metadata>, Box<dyn std::error::Error>> {
     let client = Client::new();
 
     let response = client
