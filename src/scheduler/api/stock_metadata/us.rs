@@ -4,19 +4,19 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct StockApiResponse {
-    #[serde(rename = "公司代號")]
+    #[serde(rename = "symbol")]
     ticker_symbol: String,
 
-    #[serde(rename = "公司簡稱")]
+    #[serde(rename = "description")]
     company_name: String,
 }
 
-pub async fn call_twse_metadata_api(
+pub async fn call_us_metadata_api(
 ) -> Result<Vec<Metadata>, Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
 
     let response = client
-        .get("https://openapi.twse.com.tw/v1/opendata/t187ap03_L")
+        .get("https://finnhub.io/api/v1/stock/symbol?exchange=US&token=d003ee1r01qud9qlh5bgd003ee1r01qud9qlh5c0")
         .send()
         .await?;
     let text = response.text().await?;
@@ -26,15 +26,16 @@ pub async fn call_twse_metadata_api(
     let json_data = match parsed {
         Ok(data) => data,
         Err(e) => {
-            eprintln!("Failed to parse TW stock metadata JSON : {}", e);
+            eprintln!("Failed to parse US stock metadata JSON : {}", e);
             return Err(Box::new(e));
         }
     };
 
     let result = json_data
         .into_iter()
+        .filter(|d| !d.ticker_symbol.is_empty() && !d.company_name.is_empty())
         .map(|data| Metadata {
-            country: "TW".to_string(),
+            country: "US".to_string(),
             ticker_symbol: data.ticker_symbol,
             company_name: data.company_name,
         })

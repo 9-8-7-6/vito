@@ -9,7 +9,7 @@ use tokio::time::sleep;
 
 pub async fn update_stock_metadata_every_month(
     pool: &PgPool,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if let Err(e) = run_stock_metadata_job(pool).await {
         eprintln!("Initial stock metadata update failed: {}", e);
     }
@@ -34,10 +34,20 @@ pub async fn update_stock_metadata_every_month(
     }
 }
 
-async fn run_stock_metadata_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
-    let datas = fetch_stock_metadata_by_country("TW").await?;
-
-    create_or_update_stock_metadata(pool, datas).await?;
-    println!("Fetching stock metadata successfully");
+async fn run_stock_metadata_job(
+    pool: &PgPool,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    for country in ["TW", "US"] {
+        match fetch_stock_metadata_by_country(country).await {
+            Ok(datas) => {
+                println!("Start to fetch metadata for country: {}", country);
+                create_or_update_stock_metadata(pool, datas).await?;
+                println!("Fetched and updated metadata for country: {}", country);
+            }
+            Err(err) => {
+                eprintln!("Failed to fetch metadata for country {}: {}", country, err);
+            }
+        }
+    }
     Ok(())
 }
