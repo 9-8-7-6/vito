@@ -7,14 +7,17 @@ use sqlx::PgPool;
 use std::{str::FromStr, time::Duration};
 use tokio::time::sleep;
 
+/// Starts a background task that updates stock metadata (symbol + company name)
+/// for all supported countries on the 1st of every month at midnight.
 pub async fn update_stock_metadata_every_month(
     pool: &PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Run the metadata update job once at startup
     if let Err(e) = run_stock_metadata_job(pool).await {
         eprintln!("Initial stock metadata update failed: {}", e);
     }
 
-    // Schedule: Every month on the 1st at 00:00
+    // Cron schedule: At 00:00 on the 1st day of every month
     let expression = "0 0 0 1 * * *";
     let schedule = Schedule::from_str(expression)?;
 
@@ -23,10 +26,12 @@ pub async fn update_stock_metadata_every_month(
             let now = Utc::now();
             let duration_secs = (next - now).num_seconds().max(0) as u64;
 
-            println!("Next stock info update scheduled at: {}", next);
+            println!("Next stock metadata update scheduled at: {}", next);
 
+            // Sleep until the scheduled time
             sleep(Duration::from_secs(duration_secs)).await;
 
+            // Execute the metadata update job
             if let Err(e) = run_stock_metadata_job(pool).await {
                 eprintln!("Monthly stock metadata update failed: {}", e);
             }
@@ -34,6 +39,8 @@ pub async fn update_stock_metadata_every_month(
     }
 }
 
+/// Fetches and persists stock metadata (ticker symbol and company name)
+/// for each supported country (e.g., TW, US).
 async fn run_stock_metadata_job(
     pool: &PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

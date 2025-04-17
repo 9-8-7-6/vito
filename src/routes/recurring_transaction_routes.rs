@@ -6,18 +6,25 @@ use std::sync::Arc;
 use crate::handlers::recurringtransaction_handler::*;
 use crate::models::Backend;
 
+/// Defines routes for managing recurring transactions
 pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
     Router::new()
+        // GET    /recurring_transactions -> Fetch all recurring transactions
+        // POST   /recurring_transactions -> Create a new recurring transaction
         .route(
             "/recurring_transactions",
             get(get_all_recurring_transactions_handler).post(add_recurring_transaction_handler),
         )
+        // GET    /recurring_transactions/{id} -> Fetch one by ID
+        // PATCH  /recurring_transactions/{id} -> Update by ID
+        // DELETE /recurring_transactions/{id} -> Delete by ID
         .route(
             "/recurring_transactions/{id}",
             get(get_recurring_transaction_handler)
                 .patch(update_recurring_transaction_handler)
                 .delete(delete_recurring_transaction_handler),
         )
+        // Enable this to protect routes with login middleware
         // .route_layer(login_required!(Backend, login_url = "/login"))
-        .with_state(state)
+        .with_state(state) // Inject database connection into all handlers
 }

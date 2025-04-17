@@ -6,6 +6,11 @@ use uuid::Uuid;
 
 use crate::models::{StockHolding, StockHoldingResponse, StockInfo, StockMetadata};
 
+/// ===============================
+/// STOCK HOLDINGS
+/// ===============================
+
+/// Query to join stock holdings with metadata and latest stock info
 const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
     SELECT 
         stock_holdings.*, 
@@ -19,8 +24,12 @@ const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
         ON stock_infos.ticker_symbol = stock_metadata.ticker_symbol
     WHERE stock_holdings.account_id = $1
 "#;
+
+/// Query to retrieve stock ID from stock_metadata for a given ticker and country
 const QUERY_STOCK_ID_FROM_STOCK_METADATA: &str =
     "SELECT id FROM stock_metadata WHERE country = $1 AND ticker_symbol = $2 AND is_active = TRUE";
+
+/// Insert new or update existing stock holding (upsert logic)
 const QUERY_INSERT_OR_UPDATE: &str = "
     INSERT INTO stock_holdings (id, account_id, stock_id, quantity, average_price, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -34,8 +43,10 @@ const QUERY_INSERT_OR_UPDATE: &str = "
         updated_at = EXCLUDED.updated_at
     RETURNING *;
 ";
+
 const QUERY_DELETE: &str = "DELETE FROM stock_holdings WHERE id = $1";
 
+/// Get all stock holdings for a specific account (joined with metadata and latest prices)
 pub async fn get_stock_holdings_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
@@ -46,6 +57,7 @@ pub async fn get_stock_holdings_by_account_id(
         .await
 }
 
+/// Insert or update stock holding based on ticker symbol and country
 pub async fn create_stock_holding(
     pool: &PgPool,
     account_id: Uuid,
@@ -74,6 +86,7 @@ pub async fn create_stock_holding(
         .await
 }
 
+/// Update a stock holding's quantity and/or average price
 pub async fn update_stock_holding_info(
     pool: &PgPool,
     stock_holding_id: Uuid,
@@ -87,26 +100,22 @@ pub async fn update_stock_holding_info(
     let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE stock_holdings SET ");
 
     if let Some(quantity) = quantity {
-        builder.push("quantity = ").push_bind(quantity);
-        builder.push(", ");
+        builder.push("quantity = ").push_bind(quantity).push(", ");
     }
 
     if let Some(average_price) = average_price {
-        builder.push("average_price = ").push_bind(average_price);
-        builder.push(", ");
+        builder.push("average_price = ").push_bind(average_price).push(", ");
     }
 
     builder.push("updated_at = ").push_bind(Utc::now());
-
     builder.push(" WHERE id = ").push_bind(stock_holding_id);
     builder.push(" RETURNING *");
 
     let query = builder.build_query_as::<StockHolding>();
-    let asset = query.fetch_one(pool).await?;
-
-    Ok(asset)
+    query.fetch_one(pool).await
 }
 
+/// Delete a stock holding by ID
 pub async fn delete_stock_holding(
     pool: &PgPool,
     stock_holding_id: Uuid,
@@ -117,6 +126,10 @@ pub async fn delete_stock_holding(
         .await
         .map(|_| ())
 }
+
+/// ===============================
+/// STOCK METADATA
+/// ===============================
 
 const QUERY_METADATA_SELECT_ALL: &str = "SELECT * FROM stock_metadata";
 const QUERY_METADATA_SELECT_BY_ID: &str = "SELECT * FROM stock_metadata WHERE id = $1";
@@ -131,12 +144,14 @@ const QUERY_METADATA_UPSERT: &str = "
 const QUERY_METADATA_DELETE_ALL: &str = "DELETE FROM stock_metadata";
 const QUERY_METADATA_DELETE: &str = "DELETE FROM stock_metadata WHERE id = $1";
 
+/// Fetch all stock metadata entries
 pub async fn get_all_stock_metadata(pool: &PgPool) -> Result<Vec<StockMetadata>, sqlx::Error> {
     sqlx::query_as::<_, StockMetadata>(QUERY_METADATA_SELECT_ALL)
         .fetch_all(pool)
         .await
 }
 
+/// Get stock metadata by ID
 pub async fn get_stock_metadata_by_id(
     pool: &PgPool,
     id: Uuid,
@@ -147,6 +162,7 @@ pub async fn get_stock_metadata_by_id(
         .await
 }
 
+/// Bulk insert or update stock metadata from external sources (e.g., TWSE or Finnhub)
 pub async fn create_or_update_stock_metadata(
     pool: &PgPool,
     datas: Vec<Metadata>,
@@ -160,10 +176,10 @@ pub async fn create_or_update_stock_metadata(
             .execute(pool)
             .await?;
     }
-
     Ok(())
 }
 
+/// Update selected fields of a stock metadata entry
 pub async fn update_stock_metadata(
     pool: &PgPool,
     id: Uuid,
@@ -209,11 +225,10 @@ pub async fn update_stock_metadata(
     builder.push(" RETURNING *");
 
     let query = builder.build_query_as::<StockMetadata>();
-    let result = query.fetch_one(pool).await?;
-
-    Ok(result)
+    query.fetch_one(pool).await
 }
 
+/// Delete a single stock metadata entry by ID
 pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE)
         .bind(id)
@@ -222,6 +237,7 @@ pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::
         .map(|_| ())
 }
 
+/// Delete all stock metadata (use with caution!)
 pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE_ALL)
         .execute(pool)
@@ -229,6 +245,11 @@ pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error>
         .map(|_| ())
 }
 
+/// ===============================
+/// STOCK INFOS (Market Data)
+/// ===============================
+
+/// Upsert query for latest market data (from external API like Finnhub)
 const QUERY_UPSERT_STOCK_INFO: &str = "
     INSERT INTO stock_infos (
         country, ticker_symbol, company_name, trade_volume,
@@ -253,6 +274,7 @@ const QUERY_UPSERT_STOCK_INFO: &str = "
         transaction = EXCLUDED.transaction
 ";
 
+/// Insert or update multiple stock info records (market data)
 pub async fn create_or_insert_stock_infos(
     pool: &PgPool,
     infos: Vec<StockInfo>,

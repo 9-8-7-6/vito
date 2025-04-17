@@ -2,6 +2,7 @@ use crate::models::StockInfo;
 use reqwest::Client;
 use serde::Deserialize;
 
+/// Represents the expected structure of the TWSE stock API response
 #[derive(Debug, Deserialize)]
 struct StockApiResponse {
     #[serde(rename = "Code")]
@@ -35,17 +36,28 @@ struct StockApiResponse {
     transaction: String,
 }
 
+/// Calls the TWSE API to fetch daily stock info for all listed companies
+///
+/// # Returns
+/// * A list of `StockInfo` models parsed from the API response
+/// * Error if the request or deserialization fails
 pub async fn call_stock_info_api() -> Result<Vec<StockInfo>, Box<dyn std::error::Error>> {
+    // Create a reusable HTTP client
     let client = Client::new();
 
+    // Send a GET request to TWSE daily stock data endpoint
     let response = client
         .get("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL")
         .send()
         .await?;
+
+    // Convert the HTTP response body to a string
     let text = response.text().await?;
 
+    // Deserialize JSON array into vector of intermediate API structs
     let json_data: Vec<StockApiResponse> = serde_json::from_str(&text)?;
 
+    // Map raw API response into your internal StockInfo model
     let result = json_data
         .into_iter()
         .map(|data| StockInfo {

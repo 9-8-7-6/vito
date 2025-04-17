@@ -17,6 +17,7 @@ use crate::repository::{
     get_user_by_username,
 };
 
+/// Represents a user in the system, mapping to the `users` table
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone, Default)]
 pub struct User {
     pub id: Uuid,
@@ -32,6 +33,7 @@ pub struct User {
     pub timezone: Option<String>,
 }
 
+/// Required by `axum-login` to identify a user and generate session hashes
 impl AuthUser for User {
     type Id = Uuid;
 
@@ -45,6 +47,7 @@ impl AuthUser for User {
 }
 
 impl User {
+    /// Hashes a plain-text password using Argon2
     pub fn hash_password(password: &str) -> Result<String, String> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
@@ -55,6 +58,7 @@ impl User {
             .map_err(|e| e.to_string())
     }
 
+    /// Verifies if a plain-text password matches the stored hash
     pub fn verify_password(&self, password: &str) -> bool {
         match PasswordHash::new(&self.hashed_password) {
             Ok(parsed_hash) => Argon2::default()
@@ -68,18 +72,21 @@ impl User {
     }
 }
 
+/// Simple struct for holding login credentials
 #[derive(Clone)]
 pub struct Credentials {
     pub username: String,
     pub password: String,
 }
 
+/// Backend implementation for authentication and user management
 #[derive(Clone)]
 pub struct Backend {
     db: Arc<PgPool>,
 }
 
 impl Backend {
+    /// Initialize the authentication backend with a database connection pool
     pub async fn new(db_url: &str) -> Result<Self, sqlx::Error> {
         let db = Arc::new(
             PgPoolOptions::new()
@@ -89,14 +96,18 @@ impl Backend {
         );
         Ok(Self { db })
     }
+
+    /// Query user by email
     pub async fn get_user_by_email(&self, email: &str) -> Result<Option<User>, sqlx::Error> {
         get_user_by_email(&self.db, email).await
     }
 
+    /// Query user by username
     pub async fn get_user_by_username(&self, username: &str) -> Result<Option<User>, sqlx::Error> {
         get_user_by_username(&self.db, username).await
     }
 
+    /// Insert a new user into the database
     pub async fn create_user_(&self, user: &User) -> Result<(), sqlx::Error> {
         create_user(
             &self.db,
@@ -109,6 +120,7 @@ impl Backend {
         .map(|_| ())
     }
 
+    /// Create an associated account for the new user (with 0 balance)
     pub async fn create_account_(&self, user: &User) -> Result<(), sqlx::Error> {
         match create_account(&self.db, user.id.clone(), Decimal::new(0, 2)).await {
             Ok(_) => Ok(()),
@@ -116,10 +128,12 @@ impl Backend {
         }
     }
 
+    /// Delete a user by their ID
     pub async fn delete_user(&self, user_id: &Uuid) -> Result<(), sqlx::Error> {
         delete_user(&self.db, user_id.clone()).await
     }
 
+    /// Validates whether the session contains a valid UUID user ID
     pub async fn is_session_valid(
         &self,
         session: &Session,
@@ -136,12 +150,14 @@ impl Backend {
     }
 }
 
+/// Auth backend implementation for `axum-login`
 #[async_trait]
 impl AuthnBackend for Backend {
     type User = User;
     type Credentials = Credentials;
     type Error = std::convert::Infallible;
 
+    /// Authenticates a user by verifying their password
     async fn authenticate(
         &self,
         Credentials { username, password }: Self::Credentials,
@@ -160,6 +176,7 @@ impl AuthnBackend for Backend {
         Ok(None)
     }
 
+    /// Retrieves a user from the database using their ID
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
         match get_user_by_id(&self.db, user_id.clone()).await {
             Ok(user) => Ok(user),

@@ -11,14 +11,16 @@ use uuid::Uuid;
 use crate::models::User;
 use crate::repository::{create_user, delete_user, get_user_by_id, get_users, update_user_info};
 
+/// Request body for creating a user
 #[derive(Deserialize)]
 pub struct CreateuserRequest {
-    user_id: Uuid,
-    username: String,
-    email: String,
-    password: String,
+    pub user_id: Uuid,
+    pub username: String,
+    pub email: String,
+    pub password: String,
 }
 
+/// Request body for updating an existing user
 #[derive(Deserialize)]
 pub struct UpdateuserRequest {
     pub username: Option<String>,
@@ -30,11 +32,13 @@ pub struct UpdateuserRequest {
     pub timezone: Option<String>,
 }
 
+/// Handler: Fetch all users in the database
 pub async fn get_all_users_handler(State(pool): State<Arc<PgPool>>) -> Json<Vec<User>> {
-    let users = get_users(&pool).await.unwrap();
+    let users = get_users(&pool).await.unwrap(); // unwrap is safe if you control DB connection
     Json(users)
 }
 
+/// Handler: Fetch a single user by ID
 pub async fn get_user_handler(
     State(pool): State<Arc<PgPool>>,
     Path(user_id): Path<Uuid>,
@@ -52,10 +56,12 @@ pub async fn get_user_handler(
     }
 }
 
+/// Handler: Create a new user with hashed password
 pub async fn add_user_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateuserRequest>,
 ) -> (StatusCode, Json<User>) {
+    // Hash the plaintext password
     let hashed_password = match User::hash_password(&payload.password) {
         Ok(hash) => hash,
         Err(err) => {
@@ -64,6 +70,7 @@ pub async fn add_user_handler(
         }
     };
 
+    // Insert user into the database
     match create_user(
         &pool,
         &payload.user_id,
@@ -81,11 +88,13 @@ pub async fn add_user_handler(
     }
 }
 
+/// Handler: Update user fields (including optional password hashing)
 pub async fn update_user_handler(
     State(pool): State<Arc<PgPool>>,
     Path(user_id): Path<Uuid>,
     Json(payload): Json<UpdateuserRequest>,
 ) -> (StatusCode, Json<User>) {
+    // If password is included, hash it first
     let hashed_password = if let Some(password) = &payload.password {
         match User::hash_password(password) {
             Ok(hash) => Some(hash),
@@ -98,6 +107,7 @@ pub async fn update_user_handler(
         None
     };
 
+    // Update fields in the database
     match update_user_info(
         &pool,
         user_id,
@@ -119,12 +129,13 @@ pub async fn update_user_handler(
     }
 }
 
+/// Handler: Delete a user by ID
 pub async fn delete_user_handler(
     State(pool): State<Arc<PgPool>>,
     Path(user_id): Path<Uuid>,
 ) -> StatusCode {
     match delete_user(&pool, user_id).await {
-        Ok(_) => StatusCode::NO_CONTENT,
+        Ok(_) => StatusCode::NO_CONTENT, // 204 No Content on success
         Err(sqlx::Error::RowNotFound) => {
             eprintln!("User {} not found for deletion.", user_id);
             StatusCode::NOT_FOUND
@@ -136,6 +147,7 @@ pub async fn delete_user_handler(
     }
 }
 
+/// Fallback dummy User object used when an operation fails
 fn dummy_user() -> User {
     User::default()
 }

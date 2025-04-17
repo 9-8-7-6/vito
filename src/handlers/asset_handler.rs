@@ -15,6 +15,7 @@ use crate::repository::{
     create_asset, delete_asset, get_asset_by_user_id, get_assets, update_asset_info,
 };
 
+/// Request payload for creating a new asset
 #[derive(Deserialize)]
 pub struct CreateAssetRequest {
     pub account_id: Uuid,
@@ -22,12 +23,14 @@ pub struct CreateAssetRequest {
     pub balance: Decimal,
 }
 
+/// Request payload for updating an existing asset
 #[derive(Deserialize)]
 pub struct UpdateAssetRequest {
     pub asset_type: Option<String>,
     pub balance: Option<Decimal>,
 }
 
+/// Handler: Fetch all asset records from the system
 pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_assets(&pool).await {
         Ok(assets) => AssetList(assets).into_response(),
@@ -38,6 +41,7 @@ pub async fn get_all_assets_handler(State(pool): State<Arc<PgPool>>) -> impl Int
     }
 }
 
+/// Handler: Fetch all assets for a specific user (by account ID)
 pub async fn get_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(user_id): Path<Uuid>,
@@ -51,6 +55,7 @@ pub async fn get_asset_handler(
     }
 }
 
+/// Handler: Create a new asset for a user account
 pub async fn add_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateAssetRequest>,
@@ -74,6 +79,7 @@ pub async fn add_asset_handler(
     }
 }
 
+/// Handler: Update an asset’s type or balance
 pub async fn update_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(asset_id): Path<Uuid>,
@@ -88,12 +94,13 @@ pub async fn update_asset_handler(
     }
 }
 
+/// Handler: Delete an asset by its ID
 pub async fn delete_asset_handler(
     State(pool): State<Arc<PgPool>>,
     Path(asset_id): Path<Uuid>,
 ) -> impl IntoResponse {
     match delete_asset(&pool, asset_id).await {
-        Ok(_) => StatusCode::NO_CONTENT.into_response(),
+        Ok(_) => StatusCode::NO_CONTENT.into_response(), // 204 No Content
         Err(err) => {
             eprintln!("Failed to delete asset {}: {:#?}", asset_id, err);
             StatusCode::INTERNAL_SERVER_ERROR.into_response()

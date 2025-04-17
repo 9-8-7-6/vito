@@ -17,6 +17,7 @@ use crate::repository::{
     get_stock_metadata_by_id, update_stock_holding_info, update_stock_metadata,
 };
 
+/// Payload format for creating a stock holding
 #[derive(Deserialize)]
 pub struct CreateStockHoldingRequest {
     pub account_id: Uuid,
@@ -26,12 +27,14 @@ pub struct CreateStockHoldingRequest {
     pub average_price: Decimal,
 }
 
+/// Payload format for updating a stock holding
 #[derive(Deserialize)]
 pub struct UpdateStockHoldingRequest {
     pub quantity: Option<Decimal>,
     pub average_price: Option<Decimal>,
 }
 
+/// Handler: Get all stock holdings for a specific account
 pub async fn get_stock_holdings_by_account_handler(
     State(pool): State<Arc<PgPool>>,
     Path(account_id): Path<Uuid>,
@@ -48,6 +51,7 @@ pub async fn get_stock_holdings_by_account_handler(
     }
 }
 
+/// Handler: Create a stock holding record for an account and stock
 pub async fn create_stock_holding_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateStockHoldingRequest>,
@@ -73,6 +77,7 @@ pub async fn create_stock_holding_handler(
     }
 }
 
+/// Handler: Update quantity or average price of a stock holding
 pub async fn update_stock_holding_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,
@@ -87,6 +92,7 @@ pub async fn update_stock_holding_handler(
     }
 }
 
+/// Handler: Delete a stock holding record by its ID
 pub async fn delete_stock_holding_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,
@@ -100,6 +106,7 @@ pub async fn delete_stock_holding_handler(
     }
 }
 
+/// Payload format for creating stock metadata (manual insert)
 #[derive(Deserialize)]
 pub struct CreateStockMetadataRequest {
     pub country: String,
@@ -107,6 +114,7 @@ pub struct CreateStockMetadataRequest {
     pub name: String,
 }
 
+/// Payload format for updating stock metadata
 #[derive(Deserialize)]
 pub struct UpdateStockMetadataRequest {
     pub country: Option<String>,
@@ -114,6 +122,7 @@ pub struct UpdateStockMetadataRequest {
     pub name: Option<String>,
 }
 
+/// Handler: Get all stock metadata records (e.g., for admin viewing)
 pub async fn get_all_stock_metadata_handler(State(pool): State<Arc<PgPool>>) -> impl IntoResponse {
     match get_all_stock_metadata(&pool).await {
         Ok(records) => StockMetadataList(records).into_response(),
@@ -124,6 +133,7 @@ pub async fn get_all_stock_metadata_handler(State(pool): State<Arc<PgPool>>) -> 
     }
 }
 
+/// Handler: Get a single stock metadata entry by UUID
 pub async fn get_stock_metadata_by_id_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,
@@ -137,6 +147,7 @@ pub async fn get_stock_metadata_by_id_handler(
     }
 }
 
+/// Handler: Update metadata of a stock by ID
 pub async fn update_stock_metadata_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,
@@ -159,6 +170,7 @@ pub async fn update_stock_metadata_handler(
     }
 }
 
+/// Handler: Delete a stock metadata entry by ID
 pub async fn delete_stock_metadata_handler(
     State(pool): State<Arc<PgPool>>,
     Path(id): Path<Uuid>,

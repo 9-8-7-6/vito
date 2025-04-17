@@ -5,19 +5,21 @@ use uuid::Uuid;
 
 use crate::models::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 
+// SQL queries
 const QUERY_SELECT_ALL: &str = "SELECT * FROM recurring_transactions";
 const QUERY_SELECT_ONE: &str = "SELECT * FROM recurring_transactions WHERE id = $1";
 const QUERY_INSERT: &str = "
     INSERT INTO recurring_transactions (
-        id, account_id, asset_id,  amount, interval, 
+        id, account_id, asset_id, amount, interval, 
         next_execution, transaction_type, is_active, created_at, updated_at
     ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, true, $9, $8
-    ) 
+    )
     RETURNING *
 ";
 const QUERY_DELETE: &str = "DELETE FROM recurring_transactions WHERE id = $1";
 
+/// Fetch all recurring transactions from the database
 pub async fn get_recurring_transactions(
     pool: &PgPool,
 ) -> Result<Vec<RecurringTransaction>, sqlx::Error> {
@@ -27,6 +29,7 @@ pub async fn get_recurring_transactions(
     Ok(recurring_transactions)
 }
 
+/// Fetch a single recurring transaction by its ID
 pub async fn get_recurring_transaction_by_id(
     pool: &PgPool,
     transaction_id: Uuid,
@@ -38,6 +41,7 @@ pub async fn get_recurring_transaction_by_id(
     Ok(recurring_transaction)
 }
 
+/// Create a new recurring transaction with the provided details
 pub async fn create_recurring_transaction(
     pool: &PgPool,
     account_id: Uuid,
@@ -47,21 +51,22 @@ pub async fn create_recurring_transaction(
     transaction_type: RecurringTransactionType,
 ) -> Result<RecurringTransaction, sqlx::Error> {
     let recurring_transaction = sqlx::query_as::<_, RecurringTransaction>(QUERY_INSERT)
-        .bind(Uuid::new_v4())
+        .bind(Uuid::new_v4())       // id
         .bind(account_id)
         .bind(asset_id)
         .bind(amount)
         .bind(interval)
-        .bind(Utc::now())
+        .bind(Utc::now())           // next_execution (default to now)
         .bind(transaction_type as i32)
-        .bind(Utc::now())
-        .bind(Utc::now())
+        .bind(Utc::now())           // updated_at
+        .bind(Utc::now())           // created_at
         .fetch_one(pool)
         .await?;
 
     Ok(recurring_transaction)
 }
 
+/// Update fields of a recurring transaction such as amount, interval, execution time, or active status
 pub async fn update_recurring_transaction_info(
     pool: &PgPool,
     transaction_id: Uuid,
@@ -70,6 +75,7 @@ pub async fn update_recurring_transaction_info(
     next_execution: Option<DateTime<Utc>>,
     is_active: Option<bool>,
 ) -> Result<RecurringTransaction, sqlx::Error> {
+    // If no fields are provided to update, return an error
     if amount.is_none() && interval.is_none() && next_execution.is_none() && is_active.is_none() {
         return Err(sqlx::Error::RowNotFound);
     }
@@ -97,6 +103,7 @@ pub async fn update_recurring_transaction_info(
         builder.push(", ");
     }
 
+    // Always update the timestamp
     builder.push("updated_at = ").push_bind(Utc::now());
 
     builder.push(" WHERE id = ").push_bind(transaction_id);
@@ -108,6 +115,7 @@ pub async fn update_recurring_transaction_info(
     Ok(recurring_transaction)
 }
 
+/// Delete a recurring transaction by its ID
 pub async fn delete_recurring_transaction(
     pool: &PgPool,
     transaction_id: Uuid,

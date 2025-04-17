@@ -33,6 +33,7 @@ use routes::{
     stock_routes::stock_routes, transaction_routes::transaction_routes, user_routes::user_routes,
 };
 
+/// Struct for holding environment-provided service URLs
 struct Url {
     database_url: String,
     redis_url: String,
@@ -41,22 +42,31 @@ struct Url {
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+
+    // Load database and Redis URLs from .env
     let urls = Url {
         database_url: std::env::var("DATABASE_URL").expect("DATABASE_URL not set"),
         redis_url: std::env::var("REDIS_URL").expect("REDIS_URL not set"),
     };
 
+    // Initialize Postgres connection and run migrations
     let state: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(db::init_db(&urls.database_url).await);
 
+    // Start all scheduled background jobs (e.g., stock metadata updates)
     start_all_schedulers(state.clone()).await;
 
+    // Initialize backend logic for axum-login (e.g., user/password auth)
     let backend = Backend::new(&urls.database_url)
         .await
         .expect("Failed to initialize Backend: Check DATABASE_URL");
 
+    // Set up Redis session storage and session expiration policy
     let session_layer = db::init_redis(&urls.redis_url).await;
+
+    // Set up login authentication middleware with Redis-backed sessions
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
+    // Configure CORS for frontend on http://localhost:5173 (e.g., Vite or Vue dev server)
     let cors = CorsLayer::new()
         .allow_methods([
             Method::GET,
@@ -70,6 +80,7 @@ async fn main() {
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true);
 
+    // OpenAPI documentation configuration
     #[derive(OpenApi)]
     #[openapi(
         modifiers(&SecurityAddon),
@@ -79,6 +90,7 @@ async fn main() {
     )]
     struct ApiDoc;
 
+    // Adds security scheme to OpenAPI spec
     struct SecurityAddon;
     impl Modify for SecurityAddon {
         fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
@@ -90,11 +102,14 @@ async fn main() {
             }
         }
     }
+
+    // Split OpenAPI documentation router and spec
     let (openapi_router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
 
+    // Compose all routes into one main router
     let routes_all = Router::new()
-        // .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone()))
-        .merge(openapi_router)
+        // .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone())) // Optional Swagger UI
+        .merge(openapi_router) // OpenAPI JSON output
         .merge(account_routes(state.clone()))
         .merge(user_routes(state.clone()))
         .merge(asset_routes(state.clone()))
@@ -103,11 +118,12 @@ async fn main() {
         .merge(stock_routes(state.clone()))
         .merge(country_routes(state.clone()))
         .merge(login_routes(backend.clone()))
-        .layer(cors)
-        .layer(CookieManagerLayer::new())
-        .layer(auth_layer)
-        .layer(session_layer);
+        .layer(cors) // Apply CORS
+        .layer(CookieManagerLayer::new()) // Enable cookie support
+        .layer(auth_layer) // Enable login session middleware
+        .layer(session_layer); // Enable Redis session store
 
+    // Bind and serve the application
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
     println!("🚀 Server running on {}", addr);
 

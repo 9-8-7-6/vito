@@ -16,6 +16,7 @@ use crate::repository::{
     get_recurring_transactions, update_recurring_transaction_info,
 };
 
+/// Request body for creating a recurring transaction
 #[derive(Deserialize)]
 pub struct CreateRecurringTransactionRequest {
     pub account_id: Uuid,
@@ -25,6 +26,7 @@ pub struct CreateRecurringTransactionRequest {
     pub transaction_type: RecurringTransactionType,
 }
 
+/// Request body for updating a recurring transaction
 #[derive(Deserialize)]
 pub struct UpdateRecurringTransactionRequest {
     pub amount: Option<Decimal>,
@@ -33,6 +35,7 @@ pub struct UpdateRecurringTransactionRequest {
     pub is_active: Option<bool>,
 }
 
+/// Handler: Fetch all recurring transactions from the database
 pub async fn get_all_recurring_transactions_handler(
     State(pool): State<Arc<PgPool>>,
 ) -> Json<Vec<RecurringTransaction>> {
@@ -40,6 +43,7 @@ pub async fn get_all_recurring_transactions_handler(
     Json(transactions)
 }
 
+/// Handler: Fetch a specific recurring transaction by ID
 pub async fn get_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
@@ -50,6 +54,7 @@ pub async fn get_recurring_transaction_handler(
     Json(transaction)
 }
 
+/// Handler: Create a new recurring transaction
 pub async fn add_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Json(payload): Json<CreateRecurringTransactionRequest>,
@@ -69,12 +74,13 @@ pub async fn add_recurring_transaction_handler(
             eprintln!("Failed to create recurring transaction: {:#?}", err);
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(dummy_recurring_transaction()),
+                Json(dummy_recurring_transaction()), // fallback dummy object
             )
         }
     }
 }
 
+/// Handler: Update an existing recurring transaction
 pub async fn update_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
@@ -98,18 +104,19 @@ pub async fn update_recurring_transaction_handler(
             );
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(dummy_recurring_transaction()),
+                Json(dummy_recurring_transaction()), // fallback dummy object
             )
         }
     }
 }
 
+/// Handler: Delete a recurring transaction by ID
 pub async fn delete_recurring_transaction_handler(
     State(pool): State<Arc<PgPool>>,
     Path(transaction_id): Path<Uuid>,
 ) -> StatusCode {
     match delete_recurring_transaction(&pool, transaction_id).await {
-        Ok(_) => StatusCode::NO_CONTENT,
+        Ok(_) => StatusCode::NO_CONTENT, // 204: Successfully deleted
         Err(err) => {
             eprintln!(
                 "Failed to delete recurring transaction {}: {:#?}",
@@ -120,6 +127,7 @@ pub async fn delete_recurring_transaction_handler(
     }
 }
 
+/// Dummy object used when transaction creation/update fails
 fn dummy_recurring_transaction() -> RecurringTransaction {
     RecurringTransaction {
         id: Uuid::nil(),

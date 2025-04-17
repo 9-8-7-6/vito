@@ -6,9 +6,14 @@ use uuid::Uuid;
 use crate::models::{EnrichedTransaction, Transaction, TransactionType};
 use crate::repository::asset_repository::get_asset_type_by_asset_id;
 
+// SQL query to get all transactions where the given account is either sender or receiver
 const QUERY_SELECT_BY_ACCOUNT_ID: &str =
     "SELECT * FROM transactions WHERE from_account_id = $1 OR to_account_id = $1";
+
+// SQL query to fetch a single transaction by ID
 const QUERY_SELECT_BY_TRANSACTION_ID: &str = "SELECT * FROM transactions WHERE id = $1";
+
+// SQL insert query for creating a new transaction
 const QUERY_INSERT: &str = "
     INSERT INTO transactions (
         from_asset_id, to_asset_id, transaction_type,
@@ -20,8 +25,11 @@ const QUERY_INSERT: &str = "
     )
     RETURNING *
 ";
+
+// SQL query to delete a transaction by ID
 const QUERY_DELETE: &str = "DELETE FROM transactions WHERE id = $1";
 
+/// Get all transactions involving a specific account and enrich them with asset type names.
 pub async fn get_transactions_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
@@ -34,16 +42,19 @@ pub async fn get_transactions_by_account_id(
     let mut enriched = Vec::with_capacity(transactions.len());
 
     for tx in transactions {
+        // Get asset type for from_asset_id (if exists)
         let from_asset_type = match tx.from_asset_id {
             Some(asset_id) => Some(get_asset_type_by_asset_id(pool, asset_id).await?),
             None => None,
         };
 
+        // Get asset type for to_asset_id (if exists)
         let to_asset_type = match tx.to_asset_id {
             Some(asset_id) => Some(get_asset_type_by_asset_id(pool, asset_id).await?),
             None => None,
         };
 
+        // Combine original transaction with enriched asset type info
         enriched.push(EnrichedTransaction {
             id: tx.id,
             from_asset_id: tx.from_asset_id,
@@ -66,6 +77,7 @@ pub async fn get_transactions_by_account_id(
     Ok(enriched)
 }
 
+/// Get a transaction by its ID
 pub async fn get_transaction_by_transation_id(
     pool: &PgPool,
     transaction_id: Uuid,
@@ -76,6 +88,7 @@ pub async fn get_transaction_by_transation_id(
         .await
 }
 
+/// Create a new transaction
 pub async fn create_transaction(
     pool: &PgPool,
     from_asset_id: Option<Uuid>,
@@ -94,12 +107,12 @@ pub async fn create_transaction(
         .bind(to_asset_id)
         .bind(transaction_type as i32)
         .bind(amount)
-        .bind(fee.unwrap_or(Decimal::ZERO))
+        .bind(fee.unwrap_or(Decimal::ZERO)) // Use zero fee if not provided
         .bind(from_account_id)
         .bind(to_account_id)
-        .bind(Utc::now())
-        .bind(Utc::now())
-        .bind(transaction_time.unwrap_or(Utc::now()))
+        .bind(Utc::now())                    // created_at
+        .bind(Utc::now())                    // updated_at
+        .bind(transaction_time.unwrap_or(Utc::now())) // default to now if missing
         .bind(notes)
         .bind(image)
         .fetch_one(pool)
@@ -116,6 +129,7 @@ pub async fn create_transaction(
     }
 }
 
+/// Update one or more fields of a transaction
 pub async fn update_transaction_info(
     pool: &PgPool,
     transaction_id: Uuid,
@@ -130,6 +144,7 @@ pub async fn update_transaction_info(
     notes: Option<String>,
     image: Option<String>,
 ) -> Result<Transaction, sqlx::Error> {
+    // If no fields are being updated, return an error
     if from_asset_id.is_none()
         && to_asset_id.is_none()
         && transaction_type.is_none()
@@ -146,72 +161,51 @@ pub async fn update_transaction_info(
 
     let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE transactions SET ");
 
+    // Conditionally push each field if it was provided
     if let Some(from_asset_id) = from_asset_id {
-        builder.push("from_asset_id = ").push_bind(from_asset_id);
-        builder.push(", ");
+        builder.push("from_asset_id = ").push_bind(from_asset_id).push(", ");
     }
-
     if let Some(to_asset_id) = to_asset_id {
-        builder.push("to_asset_id = ").push_bind(to_asset_id);
-        builder.push(", ");
+        builder.push("to_asset_id = ").push_bind(to_asset_id).push(", ");
     }
-
     if let Some(transaction_type) = transaction_type {
-        builder
-            .push("transaction_type = ")
-            .push_bind(transaction_type);
-        builder.push(", ");
+        builder.push("transaction_type = ").push_bind(transaction_type).push(", ");
     }
-
     if let Some(amount) = amount {
-        builder.push("amount = ").push_bind(amount);
-        builder.push(", ");
+        builder.push("amount = ").push_bind(amount).push(", ");
     }
-
     if let Some(fee) = fee {
-        builder.push("fee = ").push_bind(fee);
-        builder.push(", ");
+        builder.push("fee = ").push_bind(fee).push(", ");
     }
-
     if let Some(from_account_id) = from_account_id {
-        builder
-            .push("from_account_id = ")
-            .push_bind(from_account_id);
-        builder.push(", ");
+        builder.push("from_account_id = ").push_bind(from_account_id).push(", ");
     }
-
     if let Some(to_account_id) = to_account_id {
-        builder.push("to_account_id = ").push_bind(to_account_id);
-        builder.push(", ");
+        builder.push("to_account_id = ").push_bind(to_account_id).push(", ");
     }
-
     if let Some(transaction_time) = transaction_time {
-        builder
-            .push("transaction_time = ")
-            .push_bind(transaction_time);
-        builder.push(", ");
+        builder.push("transaction_time = ").push_bind(transaction_time).push(", ");
     }
-
     if let Some(notes) = notes {
-        builder.push("notes = ").push_bind(notes);
-        builder.push(", ");
+        builder.push("notes = ").push_bind(notes).push(", ");
     }
-
     if let Some(image) = image {
-        builder.push("image = ").push_bind(image);
-        builder.push(", ");
+        builder.push("image = ").push_bind(image).push(", ");
     }
-    builder.push("updated_at = ").push_bind(Utc::now());
 
+    // Always update the timestamp
+    builder.push("updated_at = ").push_bind(Utc::now());
     builder.push(" WHERE id = ").push_bind(transaction_id);
     builder.push(" RETURNING *");
 
+    // Execute and return the updated transaction
     let query = builder.build_query_as::<Transaction>();
     let transaction = query.fetch_one(pool).await?;
 
     Ok(transaction)
 }
 
+/// Delete a transaction by its ID
 pub async fn delete_transaction(pool: &PgPool, transaction_id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_DELETE)
         .bind(transaction_id)

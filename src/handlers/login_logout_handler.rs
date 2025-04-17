@@ -11,23 +11,30 @@ use uuid::Uuid;
 
 use crate::models::{user, Backend, Credentials, User};
 
+/// Payload structure for user registration
 #[derive(Debug, Deserialize)]
 pub struct RegisterPayload {
-    username: String,
-    password: String,
-    email: String,
+    pub username: String,
+    pub password: String,
+    pub email: String,
 }
 
+/// Payload structure for user login
 #[derive(Debug, Deserialize)]
 pub struct LoginPayload {
-    username: String,
-    password: String,
+    pub username: String,
+    pub password: String,
 }
 
+/// Register a new user account
+/// - Checks for duplicate username or email
+/// - Hashes the password
+/// - Creates user and associated account in the database
 pub async fn api_register(
     State(backend): State<Backend>,
     payload: Json<RegisterPayload>,
 ) -> Result<Json<Value>, StatusCode> {
+    // Check for duplicate username
     if let Ok(Some(_)) = backend.get_user_by_username(&payload.username).await {
         return Ok(Json(json!({
             "status": "fail",
@@ -36,6 +43,7 @@ pub async fn api_register(
         })));
     }
 
+    // Check for duplicate email
     if let Ok(Some(_)) = backend.get_user_by_email(&payload.email).await {
         return Ok(Json(json!({
             "status": "fail",
@@ -44,6 +52,7 @@ pub async fn api_register(
         })));
     }
 
+    // Hash the password
     let hashed_password = match User::hash_password(&payload.password) {
         Ok(hash) => hash,
         Err(err) => {
@@ -56,6 +65,7 @@ pub async fn api_register(
         }
     };
 
+    // Create new User struct
     let new_user = User {
         id: Uuid::new_v4(),
         username: payload.username.clone(),
@@ -70,6 +80,7 @@ pub async fn api_register(
         timezone: None,
     };
 
+    // Save user to database
     if let Err(err) = backend.create_user_(&new_user).await {
         eprintln!("Failed to create user: {:?}", err);
         return Ok(Json(json!({
@@ -79,6 +90,7 @@ pub async fn api_register(
         })));
     }
 
+    // Create default account for the new user
     if let Err(err) = backend.create_account_(&new_user).await {
         eprintln!(
             "Failed to create account for user {}: {:?}",
@@ -97,17 +109,20 @@ pub async fn api_register(
     })))
 }
 
+/// Log in a user using username/password and start a session
 pub async fn api_login(
     cookies: Cookies,
     session: Session,
     State(backend): State<Backend>,
     payload: Json<LoginPayload>,
 ) -> Result<Json<Value>, StatusCode> {
+    // Build credential object
     let credentials = Credentials {
         username: payload.username.clone(),
         password: payload.password.clone(),
     };
 
+    // Authenticate the user
     let user = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
         Ok(None) => {
@@ -131,6 +146,7 @@ pub async fn api_login(
         }
     };
 
+    // Store user_id in session
     if let Err(err) = session.insert("user_id", user.id.to_string()).await {
         eprintln!("Failed to insert session for user {}: {:?}", user.id, err);
         return Ok(Json(json!({
@@ -140,12 +156,7 @@ pub async fn api_login(
         })));
     }
 
-    println!(
-        "Inserted session for user {}: {:?}",
-        user.id,
-        session.get::<String>("user_id").await
-    );
-
+    // Set session ID in cookie (non-HttpOnly for client-side access)
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
     let session_cookie = Cookie::build(("id", session_id))
         .path("/")
@@ -164,9 +175,11 @@ pub async fn api_login(
     })))
 }
 
+/// Logout current user: clear session and cookie
 pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     session.clear().await;
 
+    // Expire the session cookie
     let cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(false)
@@ -183,22 +196,26 @@ pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
 }
 
+/// Delete the currently authenticated user’s account
 pub async fn api_delete_account(
     session: Session,
     cookies: Cookies,
     State(backend): State<Backend>,
 ) -> Result<Json<Value>, StatusCode> {
+    // Get user ID from session
     let user_id: Option<Uuid> = session.get("user_id").await.unwrap_or(None);
     if user_id.is_none() {
         return Err(StatusCode::UNAUTHORIZED);
     }
 
+    // Delete user
     let user_id = user_id.unwrap();
     backend
         .delete_user(&user_id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
+    // Clean up session and cookie
     session.clear().await;
     let cookie = Cookie::build(("id", ""))
         .path("/")
@@ -213,6 +230,7 @@ pub async fn api_delete_account(
     })))
 }
 
+/// Check if current session is valid and bound to a user
 pub async fn check_session(
     State(backend): State<Backend>,
     session: Session,
