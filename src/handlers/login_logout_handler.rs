@@ -235,24 +235,27 @@ pub async fn check_session(
     State(backend): State<Backend>,
     session: Session,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let (is_valid, user_id) = backend
+    let (is_valid, user_id_str) = backend
         .is_session_valid(&session)
         .await
         .unwrap_or((false, "".to_string()));
-    let user_id = Uuid::parse_str(&user_id).map_err(|_| StatusCode::BAD_REQUEST)?;
 
-    if is_valid {
-        let user = backend
-            .get_user(&user_id)
-            .await
-            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if !is_valid {
+        return Err(StatusCode::UNAUTHORIZED);
+    }
 
-        if user.is_some() {
-            return Ok(Json(json!({
-                "status": "success",
-                "message": "Session is valid"
-            })));
-        }
+    let user_id = Uuid::parse_str(&user_id_str).map_err(|_| StatusCode::UNAUTHORIZED)?;
+
+    let user = backend
+        .get_user(&user_id)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+
+    if user.is_some() {
+        return Ok(Json(json!({
+            "status": "success",
+            "message": "Session is valid"
+        })));
     }
 
     Err(StatusCode::UNAUTHORIZED)

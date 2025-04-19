@@ -325,14 +325,16 @@ mod tests {
     #[tokio::test]
     async fn test_upsert_and_get_stock_metadata() {
         let pool = setup_test_db().await;
-        delete_all_stock_metadata(&pool).await.unwrap();
 
         let metadata = vec![Metadata {
             country: "TW".to_string(),
             ticker_symbol: "2330".to_string(),
             company_name: "台積電".to_string(),
         }];
-
+        sqlx::query("DELETE FROM stock_metadata")
+            .execute(&pool)
+            .await
+            .unwrap();
         create_or_update_stock_metadata(&pool, metadata.clone())
             .await
             .unwrap();
@@ -363,8 +365,8 @@ mod tests {
         // setup metadata first
         let metadata = Metadata {
             country: "TW".to_string(),
-            ticker_symbol: "1101".to_string(),
-            company_name: "台泥".to_string(),
+            ticker_symbol: "2330".to_string(),
+            company_name: "TSMC".to_string(),
         };
         create_or_update_stock_metadata(&pool, vec![metadata])
             .await
@@ -373,8 +375,8 @@ mod tests {
         // insert stock info
         let info = StockInfo {
             country: "TW".to_string(),
-            ticker_symbol: "1101".to_string(),
-            company_name: "台泥".to_string(),
+            ticker_symbol: "2330".to_string(),
+            company_name: "TSMC".to_string(),
             trade_volume: "10000".to_string(),
             trade_value: "100000".to_string(),
             opening_price: "50.0".to_string(),
