@@ -19,7 +19,7 @@ pub use recurring_transaction_repository::{
     get_recurring_transactions, update_recurring_transaction_info,
 };
 pub use stock_repository::{
-    create_or_insert_stock_infos, create_or_update_stock_metadata, create_stock_holding,
+    create_or_insert_stock_info, create_or_update_stock_metadata, create_stock_holding,
     delete_all_stock_metadata, delete_stock_holding, delete_stock_metadata, get_all_stock_metadata,
     get_stock_holdings_by_account_id, get_stock_metadata_by_id, update_stock_holding_info,
     update_stock_metadata,

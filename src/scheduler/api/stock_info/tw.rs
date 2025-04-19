@@ -1,6 +1,8 @@
 use crate::models::StockInfo;
+use crate::repository::create_or_insert_stock_info;
 use reqwest::Client;
 use serde::Deserialize;
+use sqlx::PgPool;
 
 /// Represents the expected structure of the TWSE stock API response
 #[derive(Debug, Deserialize)]
@@ -36,31 +38,34 @@ struct StockApiResponse {
     transaction: String,
 }
 
-/// Calls the TWSE API to fetch daily stock info for all listed companies
+/// Calls the TWSE API to fetch daily stock info for all listed companies in Taiwan,
+/// parses the response, and stores or updates each record into the database.
+///
+/// # Arguments
+/// * `pool` - Shared database connection pool
 ///
 /// # Returns
-/// * A list of `StockInfo` models parsed from the API response
-/// * Error if the request or deserialization fails
-pub async fn call_stock_info_api() -> Result<Vec<StockInfo>, Box<dyn std::error::Error>> {
-    // Create a reusable HTTP client
+/// * `Ok(())` if all records are inserted or updated successfully
+/// * `Err(...)` if network, deserialization, or DB error occurs
+pub async fn call_twse_info_api(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize an HTTP client
     let client = Client::new();
 
-    // Send a GET request to TWSE daily stock data endpoint
+    // Call the TWSE open API to retrieve all listed stock daily data
     let response = client
         .get("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL")
         .send()
         .await?;
 
-    // Convert the HTTP response body to a string
+    // Read response body as plain text
     let text = response.text().await?;
 
-    // Deserialize JSON array into vector of intermediate API structs
+    // Deserialize JSON into a vector of intermediate structs
     let json_data: Vec<StockApiResponse> = serde_json::from_str(&text)?;
 
-    // Map raw API response into your internal StockInfo model
-    let result = json_data
-        .into_iter()
-        .map(|data| StockInfo {
+    // Convert each API response entry to StockInfo and insert into DB
+    for data in json_data {
+        let info = StockInfo {
             country: "TW".to_string(),
             ticker_symbol: data.ticker_symbol,
             company_name: data.company_name,
@@ -72,8 +77,11 @@ pub async fn call_stock_info_api() -> Result<Vec<StockInfo>, Box<dyn std::error:
             closing_price: data.closing_price,
             change: data.change,
             transaction: data.transaction,
-        })
-        .collect();
+        };
 
-    Ok(result)
+        // Insert or update stock info record
+        create_or_insert_stock_info(pool, info).await?;
+    }
+
+    Ok(())
 }

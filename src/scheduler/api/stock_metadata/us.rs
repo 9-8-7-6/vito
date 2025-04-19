@@ -4,12 +4,15 @@ use serde::Deserialize;
 
 /// Represents the structure of the US stock metadata response from Finnhub
 #[derive(Debug, Deserialize)]
-struct StockApiResponse {
+pub struct StockApiResponse {
     #[serde(rename = "symbol")]
     ticker_symbol: String,
 
     #[serde(rename = "description")]
     company_name: String,
+
+    #[serde(rename = "type")]
+    type_: String,
 }
 
 /// Fetches US stock metadata (ticker symbol + company name) from the Finnhub API.
@@ -20,6 +23,19 @@ struct StockApiResponse {
 pub async fn call_us_metadata_api(
 ) -> Result<Vec<Metadata>, Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
+
+    let skip_types = [
+        "MLP",
+        "Ltd Part",
+        "NVDR",
+        "Stapled Security",
+        "Savings Share",
+        "Dutch Cert",
+        "NY Reg Shrs",
+        "PRIVATE",
+        "Misc.",
+        "",
+    ];
 
     // Send a GET request to Finnhub's stock symbol endpoint for the US exchange
     let response = client
@@ -45,7 +61,11 @@ pub async fn call_us_metadata_api(
     // Filter out entries that are missing symbol or name
     let result = json_data
         .into_iter()
-        .filter(|d| !d.ticker_symbol.is_empty() && !d.company_name.is_empty())
+        .filter(|d| {
+            !d.ticker_symbol.is_empty()
+                && !d.company_name.is_empty()
+                && !skip_types.contains(&d.type_.as_str())
+        })
         .map(|data| Metadata {
             country: "US".to_string(),
             ticker_symbol: data.ticker_symbol,

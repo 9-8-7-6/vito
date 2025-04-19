@@ -10,7 +10,7 @@ use crate::models::{StockHolding, StockHoldingResponse, StockInfo, StockMetadata
 /// STOCK HOLDINGS
 /// ===============================
 
-/// Query to join stock holdings with metadata and latest stock info
+/// SQL query: Join stock holdings with metadata and market price data
 const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
     SELECT 
         stock_holdings.*, 
@@ -25,11 +25,11 @@ const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
     WHERE stock_holdings.account_id = $1
 "#;
 
-/// Query to retrieve stock ID from stock_metadata for a given ticker and country
+/// SQL query: Get stock ID by country and ticker symbol
 const QUERY_STOCK_ID_FROM_STOCK_METADATA: &str =
     "SELECT id FROM stock_metadata WHERE country = $1 AND ticker_symbol = $2 AND is_active = TRUE";
 
-/// Insert new or update existing stock holding (upsert logic)
+/// SQL query: Insert or update stock holding (average price recalculated)
 const QUERY_INSERT_OR_UPDATE: &str = "
     INSERT INTO stock_holdings (id, account_id, stock_id, quantity, average_price, created_at, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -44,9 +44,10 @@ const QUERY_INSERT_OR_UPDATE: &str = "
     RETURNING *;
 ";
 
+/// SQL query: Delete a stock holding by ID
 const QUERY_DELETE: &str = "DELETE FROM stock_holdings WHERE id = $1";
 
-/// Get all stock holdings for a specific account (joined with metadata and latest prices)
+/// Get all holdings for an account, including metadata and market price
 pub async fn get_stock_holdings_by_account_id(
     pool: &PgPool,
     account_id: Uuid,
@@ -57,7 +58,7 @@ pub async fn get_stock_holdings_by_account_id(
         .await
 }
 
-/// Insert or update stock holding based on ticker symbol and country
+/// Create or update a stock holding (insert or upsert logic)
 pub async fn create_stock_holding(
     pool: &PgPool,
     account_id: Uuid,
@@ -147,14 +148,14 @@ const QUERY_METADATA_UPSERT: &str = "
 const QUERY_METADATA_DELETE_ALL: &str = "DELETE FROM stock_metadata";
 const QUERY_METADATA_DELETE: &str = "DELETE FROM stock_metadata WHERE id = $1";
 
-/// Fetch all stock metadata entries
+/// Get all stock metadata entries
 pub async fn get_all_stock_metadata(pool: &PgPool) -> Result<Vec<StockMetadata>, sqlx::Error> {
     sqlx::query_as::<_, StockMetadata>(QUERY_METADATA_SELECT_ALL)
         .fetch_all(pool)
         .await
 }
 
-/// Get stock metadata by ID
+/// Get a single stock metadata record by ID
 pub async fn get_stock_metadata_by_id(
     pool: &PgPool,
     id: Uuid,
@@ -165,7 +166,7 @@ pub async fn get_stock_metadata_by_id(
         .await
 }
 
-/// Bulk insert or update stock metadata from external sources (e.g., TWSE or Finnhub)
+/// Insert or update multiple stock metadata records
 pub async fn create_or_update_stock_metadata(
     pool: &PgPool,
     datas: Vec<Metadata>,
@@ -182,7 +183,7 @@ pub async fn create_or_update_stock_metadata(
     Ok(())
 }
 
-/// Update selected fields of a stock metadata entry
+/// Update selected fields of a stock metadata record
 pub async fn update_stock_metadata(
     pool: &PgPool,
     id: Uuid,
@@ -231,7 +232,7 @@ pub async fn update_stock_metadata(
     query.fetch_one(pool).await
 }
 
-/// Delete a single stock metadata entry by ID
+/// Delete a single metadata record by ID
 pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE)
         .bind(id)
@@ -240,7 +241,7 @@ pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::
         .map(|_| ())
 }
 
-/// Delete all stock metadata (use with caution!)
+/// Delete all metadata entries
 pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE_ALL)
         .execute(pool)
@@ -252,7 +253,7 @@ pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error>
 /// STOCK INFOS (Market Data)
 /// ===============================
 
-/// Upsert query for latest market data (from external API like Finnhub)
+/// SQL query: Insert or update real-time market data
 const QUERY_UPSERT_STOCK_INFO: &str = "
     INSERT INTO stock_infos (
         country, ticker_symbol, company_name, trade_volume,
@@ -277,27 +278,26 @@ const QUERY_UPSERT_STOCK_INFO: &str = "
         transaction = EXCLUDED.transaction
 ";
 
-/// Insert or update multiple stock info records (market data)
-pub async fn create_or_insert_stock_infos(
+/// Insert or update a single stock info record
+pub async fn create_or_insert_stock_info(
     pool: &PgPool,
-    infos: Vec<StockInfo>,
+    info: StockInfo,
 ) -> Result<(), sqlx::Error> {
-    for info in infos {
-        sqlx::query(QUERY_UPSERT_STOCK_INFO)
-            .bind(info.country)
-            .bind(info.ticker_symbol)
-            .bind(info.company_name)
-            .bind(info.trade_volume)
-            .bind(info.trade_value)
-            .bind(info.opening_price)
-            .bind(info.highest_price)
-            .bind(info.lowest_price)
-            .bind(info.closing_price)
-            .bind(info.change)
-            .bind(info.transaction)
-            .execute(pool)
-            .await?;
-    }
+    sqlx::query(QUERY_UPSERT_STOCK_INFO)
+        .bind(info.country)
+        .bind(info.ticker_symbol)
+        .bind(info.company_name)
+        .bind(info.trade_volume)
+        .bind(info.trade_value)
+        .bind(info.opening_price)
+        .bind(info.highest_price)
+        .bind(info.lowest_price)
+        .bind(info.closing_price)
+        .bind(info.change)
+        .bind(info.transaction)
+        .execute(pool)
+        .await?;
+
     Ok(())
 }
 
@@ -386,8 +386,6 @@ mod tests {
             change: "0.5".to_string(),
             transaction: "500".to_string(),
         };
-        create_or_insert_stock_infos(&pool, vec![info])
-            .await
-            .unwrap();
+        create_or_insert_stock_info(&pool, info).await.unwrap();
     }
 }
