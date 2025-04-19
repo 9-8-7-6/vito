@@ -49,3 +49,79 @@ pub async fn upsert_country(pool: &PgPool, datas: Vec<Country>) -> Result<(), sq
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{Country, CountryList};
+    use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
+    use std::env;
+    use uuid::Uuid;
+
+    async fn setup_test_db() -> PgPool {
+        dotenvy::from_filename(".env.test").ok();
+        let test_database_url =
+            env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env.test");
+
+        if !Postgres::database_exists(&test_database_url)
+            .await
+            .unwrap_or(false)
+        {
+            Postgres::create_database(&test_database_url)
+                .await
+                .expect("Failed to create test database");
+        }
+
+        let pool = PgPool::connect(&test_database_url)
+            .await
+            .expect("Failed to connect to the test database");
+
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_upsert_and_fetch_countries() {
+        let pool = setup_test_db().await;
+
+        // Clean up any old entries
+        sqlx::query("DELETE FROM countries")
+            .execute(&pool)
+            .await
+            .unwrap();
+
+        let countries = vec![
+            Country {
+                id: Uuid::new_v4(),
+                code: "TW".to_string(),
+                name: "Taiwan".to_string(),
+                region: Some("Asia".to_string()),
+                subregion: Some("Eastern Asia".to_string()),
+                timezone: Some(vec!["Asia/Taipei".to_string()]),
+                flag_url: Some("https://flagcdn.com/tw.svg".to_string()),
+            },
+            Country {
+                id: Uuid::new_v4(),
+                code: "JP".to_string(),
+                name: "Japan".to_string(),
+                region: Some("Asia".to_string()),
+                subregion: Some("Eastern Asia".to_string()),
+                timezone: Some(vec!["Asia/Tokyo".to_string()]),
+                flag_url: Some("https://flagcdn.com/jp.svg".to_string()),
+            },
+        ];
+
+        // Upsert countries
+        upsert_country(&pool, countries.clone()).await.unwrap();
+
+        // Fetch countries and verify
+        let result = fetch_all_countries(&pool).await.unwrap();
+        assert_eq!(result.0.len(), 2);
+        assert!(result.0.iter().any(|c| c.code == "TW"));
+        assert!(result.0.iter().any(|c| c.code == "JP"));
+    }
+}

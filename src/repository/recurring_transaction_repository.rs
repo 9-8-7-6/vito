@@ -127,3 +127,123 @@ pub async fn delete_recurring_transaction(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::{IntervalChoices, RecurringTransactionType};
+    use chrono::Utc;
+    use rust_decimal::Decimal;
+    use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
+    use std::env;
+    use uuid::Uuid;
+
+    async fn setup_test_db() -> PgPool {
+        dotenvy::from_filename(".env.test").ok();
+        let test_database_url =
+            env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env.test");
+
+        if !Postgres::database_exists(&test_database_url)
+            .await
+            .unwrap_or(false)
+        {
+            Postgres::create_database(&test_database_url)
+                .await
+                .expect("Failed to create test database");
+        }
+
+        let pool = PgPool::connect(&test_database_url)
+            .await
+            .expect("Failed to connect to test DB");
+
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
+    }
+
+    async fn setup_account_and_asset(pool: &PgPool, user_id: Uuid) -> (Uuid, Uuid) {
+        // Insert test user
+        sqlx::query(
+            "INSERT INTO users (id, username, email, hashed_password) VALUES ($1, $2, $3, $4)",
+        )
+        .bind(user_id)
+        .bind(format!("user_{}", &user_id.to_string()[..8]))
+        .bind(format!("{}@example.com", &user_id.to_string()[..8]))
+        .bind("hashed")
+        .execute(pool)
+        .await
+        .unwrap();
+
+        // Insert account
+        sqlx::query("INSERT INTO accounts (account_id, balance, created_at, updated_at) VALUES ($1, $2, now(), now())")
+            .bind(user_id)
+            .bind(Decimal::new(10000, 2))
+            .execute(pool)
+            .await
+            .unwrap();
+
+        let asset_id = Uuid::new_v4();
+        sqlx::query("INSERT INTO assets (id, account_id, asset_type, balance, created_at, updated_at) VALUES ($1, $2, $3, $4, now(), now())")
+            .bind(asset_id)
+            .bind(user_id)
+            .bind("bank")
+            .bind(Decimal::new(5000, 2))
+            .execute(pool)
+            .await
+            .unwrap();
+
+        (user_id, asset_id)
+    }
+
+    #[tokio::test]
+    async fn integration_test_recurring_transaction_crud() {
+        let pool = setup_test_db().await;
+        let user_id = Uuid::new_v4();
+        let (account_id, asset_id) = setup_account_and_asset(&pool, user_id).await;
+
+        let created = create_recurring_transaction(
+            &pool,
+            account_id,
+            asset_id,
+            Decimal::new(1500, 2),
+            IntervalChoices::Monthly,
+            RecurringTransactionType::Expense,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(created.account_id, account_id);
+        assert_eq!(created.asset_id, asset_id);
+        assert_eq!(created.amount, Decimal::new(1500, 2));
+
+        let fetched = get_recurring_transaction_by_id(&pool, created.id)
+            .await
+            .unwrap();
+        assert_eq!(fetched.id, created.id);
+
+        let updated = update_recurring_transaction_info(
+            &pool,
+            created.id,
+            Some(Decimal::new(2000, 2)),
+            Some(IntervalChoices::Weekly),
+            None,
+            Some(false),
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(updated.amount, Decimal::new(2000, 2));
+        assert_eq!(updated.interval, IntervalChoices::Weekly);
+        assert_eq!(updated.is_active, false);
+
+        delete_recurring_transaction(&pool, created.id)
+            .await
+            .expect("Failed to delete transaction");
+
+        let result = get_recurring_transaction_by_id(&pool, created.id).await;
+        assert!(matches!(result, Err(sqlx::Error::RowNotFound)));
+    }
+}

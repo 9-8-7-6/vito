@@ -300,3 +300,92 @@ pub async fn create_or_insert_stock_infos(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
+    use std::env;
+
+    async fn setup_test_db() -> PgPool {
+        dotenvy::from_filename(".env.test").ok();
+        let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env.test");
+
+        if !Postgres::database_exists(&db_url).await.unwrap_or(false) {
+            Postgres::create_database(&db_url)
+                .await
+                .expect("Failed to create test DB");
+        }
+
+        let pool = PgPool::connect(&db_url).await.expect("Connect failed");
+        sqlx::migrate!().run(&pool).await.expect("Migration failed");
+        pool
+    }
+
+    #[tokio::test]
+    async fn test_upsert_and_get_stock_metadata() {
+        let pool = setup_test_db().await;
+        delete_all_stock_metadata(&pool).await.unwrap();
+
+        let metadata = vec![Metadata {
+            country: "TW".to_string(),
+            ticker_symbol: "2330".to_string(),
+            company_name: "台積電".to_string(),
+        }];
+
+        create_or_update_stock_metadata(&pool, metadata.clone())
+            .await
+            .unwrap();
+        let all = get_all_stock_metadata(&pool).await.unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].ticker_symbol, "2330");
+
+        // update name test
+        create_or_update_stock_metadata(
+            &pool,
+            vec![Metadata {
+                country: "TW".to_string(),
+                ticker_symbol: "2330".to_string(),
+                company_name: "TSMC".to_string(),
+            }],
+        )
+        .await
+        .unwrap();
+
+        let updated = get_all_stock_metadata(&pool).await.unwrap();
+        assert_eq!(updated[0].name, "TSMC");
+    }
+
+    #[tokio::test]
+    async fn test_insert_stock_info_and_query_holding() {
+        let pool = setup_test_db().await;
+
+        // setup metadata first
+        let metadata = Metadata {
+            country: "TW".to_string(),
+            ticker_symbol: "1101".to_string(),
+            company_name: "台泥".to_string(),
+        };
+        create_or_update_stock_metadata(&pool, vec![metadata])
+            .await
+            .unwrap();
+
+        // insert stock info
+        let info = StockInfo {
+            country: "TW".to_string(),
+            ticker_symbol: "1101".to_string(),
+            company_name: "台泥".to_string(),
+            trade_volume: "10000".to_string(),
+            trade_value: "100000".to_string(),
+            opening_price: "50.0".to_string(),
+            highest_price: "51.0".to_string(),
+            lowest_price: "49.0".to_string(),
+            closing_price: "50.5".to_string(),
+            change: "0.5".to_string(),
+            transaction: "500".to_string(),
+        };
+        create_or_insert_stock_infos(&pool, vec![info])
+            .await
+            .unwrap();
+    }
+}

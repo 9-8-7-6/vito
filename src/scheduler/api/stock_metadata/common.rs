@@ -2,7 +2,7 @@
 ///
 /// This struct is used to normalize stock listing data retrieved from different APIs
 /// (e.g., Taiwan Stock Exchange, US markets) into a consistent format.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Metadata {
     /// ISO country code (e.g., "TW", "US")
     pub country: String,

@@ -6,7 +6,7 @@ use std::fmt;
 use uuid::Uuid;
 
 /// Defines the interval at which a recurring transaction is executed
-#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[sqlx(type_name = "TEXT")] // Maps to a TEXT column in the database
 pub enum IntervalChoices {
     /// Transaction recurs daily

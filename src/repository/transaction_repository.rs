@@ -232,3 +232,151 @@ pub async fn delete_transaction(pool: &PgPool, transaction_id: Uuid) -> Result<(
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use rust_decimal::Decimal;
+    use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
+    use std::env;
+    use uuid::Uuid;
+
+    async fn setup_test_db() -> PgPool {
+        dotenvy::from_filename(".env.test").ok();
+        let test_database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+        if !Postgres::database_exists(&test_database_url)
+            .await
+            .unwrap_or(false)
+        {
+            Postgres::create_database(&test_database_url)
+                .await
+                .expect("Failed to create test database");
+        }
+
+        let pool = PgPool::connect(&test_database_url)
+            .await
+            .expect("Failed to connect to DB");
+
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .expect("Migrations failed");
+
+        pool
+    }
+
+    async fn insert_user_and_account(pool: &PgPool) -> Uuid {
+        let user_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO users (id, username, email, hashed_password) VALUES ($1, $2, $3, $4)",
+        )
+        .bind(user_id)
+        .bind(format!("user_{}", &user_id.to_string()[..8]))
+        .bind(format!("{}@test.com", &user_id.to_string()[..8]))
+        .bind("hashed_pw")
+        .execute(pool)
+        .await
+        .unwrap();
+
+        sqlx::query("INSERT INTO accounts (account_id, balance, created_at, updated_at) VALUES ($1, $2, now(), now())")
+            .bind(user_id)
+            .bind(Decimal::new(10000, 2))
+            .execute(pool)
+            .await
+            .unwrap();
+
+        user_id
+    }
+
+    async fn insert_asset(pool: &PgPool, account_id: Uuid, asset_type: &str) -> Uuid {
+        let asset_id = Uuid::new_v4();
+        sqlx::query(
+            "INSERT INTO assets (id, account_id, asset_type, balance, created_at, updated_at)
+                     VALUES ($1, $2, $3, $4, now(), now())",
+        )
+        .bind(asset_id)
+        .bind(account_id)
+        .bind(asset_type)
+        .bind(Decimal::new(5000, 2))
+        .execute(pool)
+        .await
+        .unwrap();
+        asset_id
+    }
+
+    #[tokio::test]
+    async fn test_create_update_delete_transaction() {
+        let pool = setup_test_db().await;
+
+        let from_account_id = insert_user_and_account(&pool).await;
+        let to_account_id = insert_user_and_account(&pool).await;
+
+        let from_asset_id = insert_asset(&pool, from_account_id, "cash").await;
+        let to_asset_id = insert_asset(&pool, to_account_id, "bank").await;
+
+        // Create
+        let tx = create_transaction(
+            &pool,
+            Some(from_asset_id),
+            Some(to_asset_id),
+            TransactionType::InternalTransfer,
+            Decimal::new(1500, 2),
+            Some(Decimal::new(50, 2)),
+            Some(from_account_id),
+            Some(to_account_id),
+            Some(Utc::now()),
+            Some("Test transfer".to_string()),
+            None,
+        )
+        .await
+        .expect("Transaction creation failed");
+
+        assert_eq!(tx.amount, Decimal::new(1500, 2));
+        assert_eq!(tx.fee, Decimal::new(50, 2));
+        assert_eq!(tx.notes.as_deref(), Some("Test transfer"));
+
+        // Update
+        let updated = update_transaction_info(
+            &pool,
+            tx.id,
+            None,
+            None,
+            Some(TransactionType::Expense),
+            Some(Decimal::new(1000, 2)),
+            None,
+            None,
+            None,
+            Some(Utc::now()),
+            Some("updated note".to_string()),
+            Some("image.jpg".to_string()),
+        )
+        .await
+        .expect("Update failed");
+
+        assert_eq!(updated.transaction_type, TransactionType::Expense);
+        assert_eq!(updated.notes.as_deref(), Some("updated note"));
+
+        // Get by ID
+        let fetched = get_transaction_by_transation_id(&pool, tx.id)
+            .await
+            .expect("Fetch by ID failed");
+        assert_eq!(fetched.id, tx.id);
+
+        // Get by account
+        let enriched = get_transactions_by_account_id(&pool, from_account_id)
+            .await
+            .expect("Get by account failed");
+        assert!(enriched.iter().any(|etx| etx.id == tx.id));
+        assert_eq!(enriched[0].from_asset_type.as_deref(), Some("cash"));
+        assert_eq!(enriched[0].to_asset_type.as_deref(), Some("bank"));
+
+        // Delete
+        delete_transaction(&pool, tx.id)
+            .await
+            .expect("Delete failed");
+        let result = get_transaction_by_transation_id(&pool, tx.id).await;
+        assert!(matches!(result, Err(sqlx::Error::RowNotFound)));
+    }
+}

@@ -170,3 +170,81 @@ pub async fn delete_user(pool: &PgPool, user_id: Uuid) -> Result<(), sqlx::Error
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
+    use std::env;
+    use uuid::Uuid;
+
+    async fn setup_test_db() -> PgPool {
+        dotenvy::from_filename(".env.test").ok();
+        let test_database_url =
+            env::var("DATABASE_URL").expect("DATABASE_URL must be set in .env.test");
+
+        if !Postgres::database_exists(&test_database_url)
+            .await
+            .unwrap_or(false)
+        {
+            Postgres::create_database(&test_database_url)
+                .await
+                .expect("Failed to create test database");
+        }
+
+        let pool = PgPool::connect(&test_database_url)
+            .await
+            .expect("Failed to connect to the test database");
+
+        sqlx::migrate!()
+            .run(&pool)
+            .await
+            .expect("Failed to run migrations");
+
+        pool
+    }
+
+    #[tokio::test]
+    async fn integration_test_user_crud() {
+        let pool = setup_test_db().await;
+        let user_id = Uuid::new_v4();
+        let username = format!("testuser_{}", &user_id.to_string()[..8]);
+        let email = format!("test_{}@example.com", &user_id.to_string()[..8]);
+        let hashed_password = "password123";
+
+        let created = create_user(&pool, &user_id, &username, &email, hashed_password)
+            .await
+            .expect("create_user failed");
+        assert_eq!(created.id, user_id);
+
+        let fetched = get_user_by_id(&pool, user_id)
+            .await
+            .expect("get_user_by_id failed")
+            .unwrap();
+        assert_eq!(fetched.username, username);
+
+        let updated = update_user_info(
+            &pool,
+            user_id,
+            None,
+            Some("Updated"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .await
+        .expect("update_user_info failed");
+        assert_eq!(updated.first_name, "Updated");
+
+        delete_user(&pool, user_id)
+            .await
+            .expect("delete_user failed");
+
+        let deleted = get_user_by_id(&pool, user_id)
+            .await
+            .expect("get_user_by_id after delete");
+        assert!(deleted.is_none());
+    }
+}

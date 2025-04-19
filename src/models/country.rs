@@ -5,7 +5,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Represents a country record from the database
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Country {
     /// Unique identifier for the country
     pub id: Uuid,

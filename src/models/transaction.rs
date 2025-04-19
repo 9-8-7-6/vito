@@ -6,7 +6,7 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Defines the type of a transaction (e.g. income, expense, transfer)
-#[derive(Debug, Serialize, Deserialize, sqlx::Type)]
+#[derive(Debug, Serialize, Deserialize, sqlx::Type, PartialEq)]
 #[repr(i32)] // Stored as integers in the database
 pub enum TransactionType {
     /// Represents incoming funds
