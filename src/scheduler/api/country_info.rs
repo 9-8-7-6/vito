@@ -6,24 +6,24 @@ use uuid::Uuid;
 /// Represents the structure of each country in the response from the REST Countries API
 #[derive(Debug, Deserialize)]
 struct CountryApiResponse {
-    cca2: String,                      // 2-letter ISO country code
-    name: CountryName,                // Country name structure
-    region: Option<String>,           // Continent or region (e.g., Asia, Europe)
-    subregion: Option<String>,        // Subregion (e.g., South-Eastern Asia)
-    timezones: Option<Vec<String>>,   // List of associated timezones
-    flags: Option<FlagUrl>,           // Country flag URLs
+    cca2: String,                   // 2-letter ISO country code
+    name: CountryName,              // Country name structure
+    region: Option<String>,         // Continent or region (e.g., Asia, Europe)
+    subregion: Option<String>,      // Subregion (e.g., South-Eastern Asia)
+    timezones: Option<Vec<String>>, // List of associated timezones
+    flags: Option<FlagUrl>,         // Country flag URLs
 }
 
 /// Represents the "name" field inside the country object
 #[derive(Debug, Deserialize)]
 struct CountryName {
-    common: String,                   // Common name of the country
+    common: String, // Common name of the country
 }
 
 /// Represents the flag URL object
 #[derive(Debug, Deserialize)]
 struct FlagUrl {
-    png: Option<String>,              // PNG-format flag URL
+    png: Option<String>, // PNG-format flag URL
 }
 
 /// Calls the REST Countries API to retrieve detailed metadata about all countries.

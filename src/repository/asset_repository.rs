@@ -53,12 +53,12 @@ pub async fn create_asset(
     balance: Decimal,
 ) -> Result<Asset, sqlx::Error> {
     sqlx::query_as::<_, Asset>(QUERY_INSERT)
-        .bind(Uuid::new_v4())     // Auto-generate asset ID
+        .bind(Uuid::new_v4()) // Auto-generate asset ID
         .bind(account_id)
         .bind(asset_type)
         .bind(balance)
-        .bind(Utc::now())         // created_at
-        .bind(Utc::now())         // updated_at
+        .bind(Utc::now()) // created_at
+        .bind(Utc::now()) // updated_at
         .fetch_one(pool)
         .await
 }
@@ -106,7 +106,7 @@ pub async fn update_asset_balance(
     amount: Decimal,
 ) -> Result<Asset, sqlx::Error> {
     sqlx::query_as::<_, Asset>(QUERY_UPDATE_BALANCE)
-        .bind(amount)      // Positive or negative value
+        .bind(amount) // Positive or negative value
         .bind(asset_id)
         .fetch_one(pool)
         .await
@@ -118,5 +118,5 @@ pub async fn delete_asset(pool: &PgPool, asset_id: Uuid) -> Result<(), sqlx::Err
         .bind(asset_id)
         .execute(pool)
         .await
-        .map(|_| ())  // Ignore row count, return ()
+        .map(|_| ()) // Ignore row count, return ()
 }

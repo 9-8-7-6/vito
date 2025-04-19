@@ -104,7 +104,10 @@ pub async fn update_stock_holding_info(
     }
 
     if let Some(average_price) = average_price {
-        builder.push("average_price = ").push_bind(average_price).push(", ");
+        builder
+            .push("average_price = ")
+            .push_bind(average_price)
+            .push(", ");
     }
 
     builder.push("updated_at = ").push_bind(Utc::now());

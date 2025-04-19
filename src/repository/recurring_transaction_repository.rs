@@ -51,15 +51,15 @@ pub async fn create_recurring_transaction(
     transaction_type: RecurringTransactionType,
 ) -> Result<RecurringTransaction, sqlx::Error> {
     let recurring_transaction = sqlx::query_as::<_, RecurringTransaction>(QUERY_INSERT)
-        .bind(Uuid::new_v4())       // id
+        .bind(Uuid::new_v4()) // id
         .bind(account_id)
         .bind(asset_id)
         .bind(amount)
         .bind(interval)
-        .bind(Utc::now())           // next_execution (default to now)
+        .bind(Utc::now()) // next_execution (default to now)
         .bind(transaction_type as i32)
-        .bind(Utc::now())           // updated_at
-        .bind(Utc::now())           // created_at
+        .bind(Utc::now()) // updated_at
+        .bind(Utc::now()) // created_at
         .fetch_one(pool)
         .await?;
 

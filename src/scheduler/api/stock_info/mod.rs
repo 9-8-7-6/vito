@@ -16,7 +16,7 @@ pub async fn fetch_stock_info_by_country(
     country: &str,
 ) -> Result<Vec<StockInfo>, Box<dyn std::error::Error>> {
     match country {
-        "TW" => call_tw().await,                    // Call TWSE-specific API implementation
-        _ => Err("Unsupported country".into()),    // Extend this match block for other countries
+        "TW" => call_tw().await, // Call TWSE-specific API implementation
+        _ => Err("Unsupported country".into()), // Extend this match block for other countries
     }
 }

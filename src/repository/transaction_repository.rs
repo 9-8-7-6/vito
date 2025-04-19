@@ -110,8 +110,8 @@ pub async fn create_transaction(
         .bind(fee.unwrap_or(Decimal::ZERO)) // Use zero fee if not provided
         .bind(from_account_id)
         .bind(to_account_id)
-        .bind(Utc::now())                    // created_at
-        .bind(Utc::now())                    // updated_at
+        .bind(Utc::now()) // created_at
+        .bind(Utc::now()) // updated_at
         .bind(transaction_time.unwrap_or(Utc::now())) // default to now if missing
         .bind(notes)
         .bind(image)
@@ -163,13 +163,22 @@ pub async fn update_transaction_info(
 
     // Conditionally push each field if it was provided
     if let Some(from_asset_id) = from_asset_id {
-        builder.push("from_asset_id = ").push_bind(from_asset_id).push(", ");
+        builder
+            .push("from_asset_id = ")
+            .push_bind(from_asset_id)
+            .push(", ");
     }
     if let Some(to_asset_id) = to_asset_id {
-        builder.push("to_asset_id = ").push_bind(to_asset_id).push(", ");
+        builder
+            .push("to_asset_id = ")
+            .push_bind(to_asset_id)
+            .push(", ");
     }
     if let Some(transaction_type) = transaction_type {
-        builder.push("transaction_type = ").push_bind(transaction_type).push(", ");
+        builder
+            .push("transaction_type = ")
+            .push_bind(transaction_type)
+            .push(", ");
     }
     if let Some(amount) = amount {
         builder.push("amount = ").push_bind(amount).push(", ");
@@ -178,13 +187,22 @@ pub async fn update_transaction_info(
         builder.push("fee = ").push_bind(fee).push(", ");
     }
     if let Some(from_account_id) = from_account_id {
-        builder.push("from_account_id = ").push_bind(from_account_id).push(", ");
+        builder
+            .push("from_account_id = ")
+            .push_bind(from_account_id)
+            .push(", ");
     }
     if let Some(to_account_id) = to_account_id {
-        builder.push("to_account_id = ").push_bind(to_account_id).push(", ");
+        builder
+            .push("to_account_id = ")
+            .push_bind(to_account_id)
+            .push(", ");
     }
     if let Some(transaction_time) = transaction_time {
-        builder.push("transaction_time = ").push_bind(transaction_time).push(", ");
+        builder
+            .push("transaction_time = ")
+            .push_bind(transaction_time)
+            .push(", ");
     }
     if let Some(notes) = notes {
         builder.push("notes = ").push_bind(notes).push(", ");
