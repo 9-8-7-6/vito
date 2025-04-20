@@ -1,7 +1,7 @@
 -- Add up migration script here
 CREATE TABLE currencies (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code VARCHAR(20) NOT NULL UNIQUE,      -- ex XAU、XAG-BID
     name VARCHAR(100) NOT NULL,            -- ex Gold、Silver Ask
-    unit VARCHAR(50)                       -- ex Troy Ounce，could be NULL
+    rate VARCHAR(50) NOT NULL             -- ex Troy Ounce，could be NULL
 );

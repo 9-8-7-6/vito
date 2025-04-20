@@ -3,34 +3,39 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-/// Represents a currency record from the database
+/// Represents a single currency record stored in the database.
+/// Each record contains a unique ID, a standardized currency code (e.g. USD, EUR),
+/// the full name of the currency, and an optional exchange rate value.
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
 pub struct Currency {
-    /// Unique identifier for the currency
+    /// Universally unique identifier for the currency record.
     pub id: Uuid,
 
-    /// Currency code (e.g., "USD", "EUR", "TWD")
+    /// Standardized currency code (e.g., "USD" for US Dollar, "TWD" for New Taiwan Dollar).
     pub code: String,
 
-    /// Full currency name (e.g., "United States Dollar", "Euro", "New Taiwan Dollar")
+    /// Descriptive name of the currency (e.g., "United States Dollar", "Euro").
     pub name: String,
 
-    /// Optional unit (e.g., "Troy Ounce" for precious metals, "1" for fiat)
-    pub unit: Option<String>,
+    /// Optional exchange rate relative to a base currency (e.g., 32.5 for USD to TWD),
+    /// or unit reference (e.g., "Troy Ounce" for metals).
+    pub rate: Option<String>,
 }
 
-/// Allows a `Currency` instance to be returned directly as a JSON response in Axum route handlers
+/// Enables a `Currency` struct to be returned directly in HTTP responses
+/// as a JSON payload in Axum-based handlers.
 impl IntoResponse for Currency {
     fn into_response(self) -> axum::response::Response {
         Json(self).into_response()
     }
 }
 
-/// Wrapper for a list of currencies used when returning multiple records
+/// A wrapper type for returning a list of `Currency` objects
+/// as a single JSON array in an HTTP response.
 #[derive(Debug, Serialize)]
 pub struct CurrencyList(pub Vec<Currency>);
 
-/// Allows `CurrencyList` to be returned directly as a JSON response in Axum route handlers
+/// Enables `CurrencyList` to be returned as a JSON response from an Axum handler.
 impl IntoResponse for CurrencyList {
     fn into_response(self) -> axum::response::Response {
         Json(self).into_response()

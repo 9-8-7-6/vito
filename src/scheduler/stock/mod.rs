@@ -9,7 +9,4 @@
 //!
 //! Use `start_all_schedulers()` to launch all recurring background jobs when the application starts.
 pub mod api;
-pub mod scheduler_launcher;
 pub mod tasks;
-
-pub use scheduler_launcher::start_all_schedulers;

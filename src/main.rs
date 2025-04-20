@@ -25,7 +25,7 @@ use utoipa_axum::router::OpenApiRouter;
 // use utoipa_swagger_ui::SwaggerUi;
 
 use crate::models::Backend;
-use scheduler::stock::start_all_schedulers;
+use scheduler::start_all_schedulers;
 
 use routes::{
     account_routes::account_routes, asset_routes::asset_routes, country_routes::country_routes,
