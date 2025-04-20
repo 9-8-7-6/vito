@@ -1,6 +1,4 @@
-use chrono::Utc;
-use rust_decimal::Decimal;
-use sqlx::{PgPool, Postgres, QueryBuilder, Row};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::models::{Country, CountryList};
@@ -53,7 +51,7 @@ pub async fn upsert_country(pool: &PgPool, datas: Vec<Country>) -> Result<(), sq
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{Country, CountryList};
+    use crate::models::Country;
     use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
     use std::env;
     use uuid::Uuid;

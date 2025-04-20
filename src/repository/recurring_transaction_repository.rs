@@ -132,7 +132,6 @@ pub async fn delete_recurring_transaction(
 mod tests {
     use super::*;
     use crate::models::{IntervalChoices, RecurringTransactionType};
-    use chrono::Utc;
     use rust_decimal::Decimal;
     use sqlx::{migrate::MigrateDatabase, PgPool, Postgres};
     use std::env;

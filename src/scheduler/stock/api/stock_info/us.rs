@@ -26,18 +26,12 @@ struct QuoteResponse {
     current_price: f64,
     #[serde(rename = "d")]
     change: Option<f64>,
-    #[serde(rename = "dp")]
-    percent_change: Option<f64>,
     #[serde(rename = "h")]
     high: f64,
     #[serde(rename = "l")]
     low: f64,
     #[serde(rename = "o")]
     open: f64,
-    #[serde(rename = "pc")]
-    previous_close: f64,
-    #[serde(rename = "t")]
-    timestamp: i64,
 }
 
 /// Fetches US stock quote data from Finnhub API and stores it into database

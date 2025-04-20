@@ -1,4 +1,4 @@
-use super::super::api::currency::fetch_twd_currency_rates;
+use super::super::api::fetch_twd_currency_rates;
 use crate::repository::upsert_currencies;
 
 use chrono::Utc;

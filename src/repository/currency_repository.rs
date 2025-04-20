@@ -1,4 +1,4 @@
-use crate::models::{Currency, CurrencyList};
+use crate::models::Currency;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 
 /// Performs a bulk upsert (insert or update) for a list of currencies into the database.

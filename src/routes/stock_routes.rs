@@ -2,7 +2,6 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
-use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 

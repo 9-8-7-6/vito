@@ -1,22 +1,11 @@
 use crate::models::Currency;
-use reqwest::Client;
 use serde::Deserialize;
-use sqlx::PgPool;
 use std::collections::HashMap;
 use uuid::Uuid;
 
 /// Represents the API response structure from MetalPriceAPI
 #[derive(Debug, Deserialize)]
 struct ApiResponse {
-    /// Whether the API call was successful
-    success: bool,
-
-    /// The base currency (should be "TWD" in this case)
-    base: String,
-
-    /// Timestamp of the response
-    timestamp: u64,
-
     /// A map of exchange rates: key = currency code, value = rate
     rates: HashMap<String, f64>,
 }
@@ -56,7 +45,8 @@ fn load_currency_name_map() -> HashMap<String, String> {
 /// A list of `Currency` structs (each containing id, code, name, rate)
 pub async fn fetch_twd_currency_rates() -> Result<Vec<Currency>, Box<dyn std::error::Error>> {
     // MetalPriceAPI endpoint with TWD as base
-    let url = "https://api.metalpriceapi.com/v1/latest?api_key=be68f8ebc0fe0f6e9582d3be42cffe11&base=TWD";
+    let url =
+        "https://api.metalpriceapi.com/v1/latest?api_key=be68f8ebc0fe0f6e9582d3be42cffe11&base=TWD";
 
     // Fetch the response body
     let response = reqwest::get(url).await?;

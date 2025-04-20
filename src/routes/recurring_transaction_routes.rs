@@ -1,10 +1,8 @@
 use axum::{routing::get, Router};
-use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
 use crate::handlers::recurringtransaction_handler::*;
-use crate::models::Backend;
 
 /// Defines routes for managing recurring transactions
 pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
@@ -30,7 +28,6 @@ pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
 }
 #[cfg(test)]
 mod tests {
-    use super::*;
     use axum::{
         body::Body,
         http::{Request, StatusCode},

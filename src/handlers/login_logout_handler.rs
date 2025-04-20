@@ -9,7 +9,7 @@ use tower_cookies::{Cookie, Cookies};
 use tower_sessions::Session;
 use uuid::Uuid;
 
-use crate::models::{user, Backend, Credentials, User};
+use crate::models::{Backend, Credentials, User};
 
 /// Payload structure for user registration
 #[derive(Debug, Deserialize)]

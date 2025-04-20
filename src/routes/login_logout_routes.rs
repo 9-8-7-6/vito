@@ -2,7 +2,6 @@ use axum::{
     routing::{options, post},
     Router,
 };
-use axum_login::login_required;
 
 use crate::handlers::login_logout_handler::*;
 use crate::models::Backend;
@@ -38,7 +37,7 @@ mod tests {
     };
     use serde_json::json;
     use sqlx::PgPool;
-    use std::{env, sync::Arc};
+    use std::env;
     use tower::ServiceExt;
     use tower_cookies::CookieManagerLayer;
     use tower_sessions::{MemoryStore, SessionManagerLayer};
@@ -95,7 +94,7 @@ mod tests {
             .body(Body::from(login_payload.to_string()))
             .unwrap();
 
-        let mut res = app.clone().oneshot(req).await.unwrap();
+        let res = app.clone().oneshot(req).await.unwrap();
         assert_eq!(res.status(), StatusCode::OK);
 
         // 儲存 cookie

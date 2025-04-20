@@ -10,13 +10,11 @@ pub mod user;
 pub use account::{Account, AccountList};
 pub use asset::{Asset, AssetList};
 pub use country::{Country, CountryList};
-pub use currency::{Currency, CurrencyList};
+pub use currency::Currency;
 pub use recurring_transaction::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 pub use stock::{
-    StockHolding, StockHoldingList, StockHoldingResponse, StockInfo, StockInfoList, StockMetadata,
+    StockHolding, StockHoldingList, StockHoldingResponse, StockInfo, StockMetadata,
     StockMetadataList,
 };
-pub use transaction::{
-    EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionList, TransactionType,
-};
+pub use transaction::{EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionType};
 pub use user::{Backend, Credentials, User};

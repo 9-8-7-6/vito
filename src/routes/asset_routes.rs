@@ -1,10 +1,8 @@
 use axum::{routing::get, Router};
-use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
 use crate::handlers::asset_handler::*;
-use crate::models::Backend;
 
 /// Defines routes for asset-related operations
 pub fn asset_routes(state: Arc<PgPool>) -> Router {

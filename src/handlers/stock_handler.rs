@@ -10,11 +10,11 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{StockHolding, StockHoldingList, StockMetadata, StockMetadataList};
+use crate::models::{StockHoldingList, StockMetadataList};
 use crate::repository::{
-    create_or_update_stock_metadata, create_stock_holding, delete_stock_holding,
-    delete_stock_metadata, get_all_stock_metadata, get_stock_holdings_by_account_id,
-    get_stock_metadata_by_id, update_stock_holding_info, update_stock_metadata,
+    create_stock_holding, delete_stock_holding, delete_stock_metadata, get_all_stock_metadata,
+    get_stock_holdings_by_account_id, get_stock_metadata_by_id, update_stock_holding_info,
+    update_stock_metadata,
 };
 
 /// Payload format for creating a stock holding
@@ -104,14 +104,6 @@ pub async fn delete_stock_holding_handler(
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
-}
-
-/// Payload format for creating stock metadata (manual insert)
-#[derive(Deserialize)]
-pub struct CreateStockMetadataRequest {
-    pub country: String,
-    pub ticker_symbol: String,
-    pub name: String,
 }
 
 /// Payload format for updating stock metadata

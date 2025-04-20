@@ -104,7 +104,7 @@ async fn main() {
     }
 
     // Split OpenAPI documentation router and spec
-    let (openapi_router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
+    let (openapi_router, _api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
 
     // Compose all routes into one main router
     let routes_all = Router::new()

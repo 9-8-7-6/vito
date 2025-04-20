@@ -11,8 +11,8 @@ pub use account_repository::{
     create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };
 pub use asset_repository::{
-    create_asset, delete_asset, get_asset_by_user_id, get_asset_type_by_asset_id, get_assets,
-    update_asset_balance, update_asset_info,
+    create_asset, delete_asset, get_asset_by_user_id, get_assets, update_asset_balance,
+    update_asset_info,
 };
 pub use country_repository::{fetch_all_countries, upsert_country};
 pub use currency_repository::upsert_currencies;
@@ -22,7 +22,7 @@ pub use recurring_transaction_repository::{
 };
 pub use stock_repository::{
     create_or_insert_stock_info, create_or_update_stock_metadata, create_stock_holding,
-    delete_all_stock_metadata, delete_stock_holding, delete_stock_metadata, get_all_stock_metadata,
+    delete_stock_holding, delete_stock_metadata, get_all_stock_metadata,
     get_stock_holdings_by_account_id, get_stock_metadata_by_id, update_stock_holding_info,
     update_stock_metadata,
 };

@@ -1,16 +1,7 @@
-use axum::{
-    extract::{Path, State},
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
-use rust_decimal::Decimal;
-use serde::Deserialize;
+use axum::{extract::State, http::StatusCode, response::IntoResponse};
 use sqlx::PgPool;
 use std::sync::Arc;
-use uuid::Uuid;
 
-use crate::models::Country;
 use crate::repository::fetch_all_countries;
 
 /// Handler: Fetch all available countries from the database

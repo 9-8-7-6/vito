@@ -1,10 +1,8 @@
 use axum::{routing::get, Router};
-use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
 use crate::handlers::account_handler::*;
-use crate::models::Backend;
 
 /// Define routes for account-related operations
 pub fn account_routes(state: Arc<PgPool>) -> Router {
@@ -31,10 +29,9 @@ mod tests {
     use super::*;
     use axum::body::to_bytes;
     use axum::{
-        body::{Body, Bytes},
+        body::Body,
         http::{Request, StatusCode},
     };
-    use rust_decimal_macros::dec;
     use serde_json::json;
     use sqlx::PgPool;
     use std::{env, sync::Arc};

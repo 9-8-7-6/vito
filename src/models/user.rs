@@ -141,7 +141,7 @@ impl Backend {
         let user_id: Option<String> = session.get("user_id").await?;
 
         if let Some(user_id) = user_id {
-            if let Ok(uuid) = Uuid::parse_str(&user_id) {
+            if let Ok(_) = Uuid::parse_str(&user_id) {
                 return Ok((true, user_id));
             }
         }

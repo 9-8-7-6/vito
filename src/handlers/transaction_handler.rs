@@ -10,9 +10,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{
-    EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionList, TransactionType,
-};
+use crate::models::{EnrichedTransactionList, Transaction, TransactionType};
 use crate::repository::{
     create_transaction, delete_transaction, get_transaction_by_transation_id,
     get_transactions_by_account_id, update_asset_balance, update_transaction_info,
@@ -153,7 +151,7 @@ pub async fn update_transaction_handler(
     }
 
     if let Some(from_asset_id) = old_transaction.from_asset_id {
-        let mut offset = old_transaction.amount + old_transaction.fee;
+        let offset = old_transaction.amount + old_transaction.fee;
         if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
             eprintln!("Failed to revert from_asset balance: {:?}", e);
         }
@@ -191,7 +189,7 @@ pub async fn update_transaction_handler(
     }
 
     if let Some(from_asset_id) = updated_transaction.from_asset_id {
-        let mut offset = updated_transaction.amount + updated_transaction.fee;
+        let offset = updated_transaction.amount + updated_transaction.fee;
         if let Err(e) = update_asset_balance(&pool, from_asset_id, -offset).await {
             eprintln!("Failed to apply new from_asset balance: {:?}", e);
         }
@@ -225,7 +223,7 @@ pub async fn delete_transaction_handler(
     }
 
     if let Some(from_asset_id) = old_transaction.from_asset_id {
-        let mut offset = old_transaction.amount + old_transaction.fee;
+        let offset = old_transaction.amount + old_transaction.fee;
         if let Err(e) = update_asset_balance(&pool, from_asset_id, offset).await {
             eprintln!("Failed to revert from_asset balance on delete: {:?}", e);
         }

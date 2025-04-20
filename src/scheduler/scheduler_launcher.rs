@@ -1,8 +1,6 @@
 use super::currency::update_currency_info_every_day;
 use super::stock::tasks::{
-    country_info_updater::update_country_info_every_month,
-    stock_info_updater::update_stock_info_every_day,
-    stock_meta_updater::update_stock_metadata_every_month,
+    update_country_info_every_month, update_stock_info_every_day, update_stock_metadata_every_month,
 };
 
 use std::sync::Arc;
