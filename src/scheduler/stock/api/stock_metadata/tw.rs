@@ -1,4 +1,4 @@
-use crate::scheduler::api::stock_metadata::common::Metadata;
+use crate::scheduler::stock::api::stock_metadata::common::Metadata;
 use reqwest::Client;
 use serde::Deserialize;
 

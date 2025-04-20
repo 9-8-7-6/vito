@@ -1,6 +1,7 @@
 pub mod account;
 pub mod asset;
 pub mod country;
+pub mod currency;
 pub mod recurring_transaction;
 pub mod stock;
 pub mod transaction;
@@ -9,6 +10,7 @@ pub mod user;
 pub use account::{Account, AccountList};
 pub use asset::{Asset, AssetList};
 pub use country::{Country, CountryList};
+pub use currency::{Currency, CurrencyList};
 pub use recurring_transaction::{IntervalChoices, RecurringTransaction, RecurringTransactionType};
 pub use stock::{
     StockHolding, StockHoldingList, StockHoldingResponse, StockInfo, StockInfoList, StockMetadata,
