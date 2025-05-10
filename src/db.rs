@@ -6,18 +6,18 @@ use tower_sessions_redis_store::{fred::prelude::*, RedisStore};
 /// Initializes the PostgreSQL database connection and runs migrations
 pub async fn init_db(database_url: &str) -> PgPool {
     // Create the database if it does not exist
-    if !Postgres::database_exists(&database_url)
+    if !Postgres::database_exists(database_url)
         .await
         .unwrap_or(false)
     {
         println!("Creating database...");
-        Postgres::create_database(&database_url)
+        Postgres::create_database(database_url)
             .await
             .expect("Failed to create database");
     }
 
     // Connect to the database
-    let pool = PgPool::connect(&database_url)
+    let pool = PgPool::connect(database_url)
         .await
         .expect("Failed to connect to database");
 
@@ -35,7 +35,7 @@ pub async fn init_db(database_url: &str) -> PgPool {
 /// Initializes a Redis session manager using tower-sessions and RedisStore
 pub async fn init_redis(redis_url: &str) -> SessionManagerLayer<RedisStore<Pool>> {
     // Parse Redis configuration from URL
-    let config = Config::from_url(&redis_url).expect("Failed to parse Redis URL");
+    let config = Config::from_url(redis_url).expect("Failed to parse Redis URL");
 
     // Create a Redis connection pool
     let pool = Pool::new(config, None, None, None, 6).expect("Failed to create Redis pool");

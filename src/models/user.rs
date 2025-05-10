@@ -122,7 +122,7 @@ impl Backend {
 
     /// Create an associated account for the new user (with 0 balance)
     pub async fn create_account_(&self, user: &User) -> Result<(), sqlx::Error> {
-        match create_account(&self.db, user.id.clone(), Decimal::new(0, 2)).await {
+        match create_account(&self.db, user.id, Decimal::new(0, 2)).await {
             Ok(_) => Ok(()),
             Err(e) => Err(e),
         }
@@ -130,7 +130,7 @@ impl Backend {
 
     /// Delete a user by their ID
     pub async fn delete_user(&self, user_id: &Uuid) -> Result<(), sqlx::Error> {
-        delete_user(&self.db, user_id.clone()).await
+        delete_user(&self.db, *user_id).await
     }
 
     /// Validates whether the session contains a valid UUID user ID
@@ -141,7 +141,7 @@ impl Backend {
         let user_id: Option<String> = session.get("user_id").await?;
 
         if let Some(user_id) = user_id {
-            if let Ok(_) = Uuid::parse_str(&user_id) {
+            if Uuid::parse_str(&user_id).is_ok() {
                 return Ok((true, user_id));
             }
         }
@@ -178,7 +178,7 @@ impl AuthnBackend for Backend {
 
     /// Retrieves a user from the database using their ID
     async fn get_user(&self, user_id: &UserId<Self>) -> Result<Option<Self::User>, Self::Error> {
-        match get_user_by_id(&self.db, user_id.clone()).await {
+        match get_user_by_id(&self.db, *user_id).await {
             Ok(user) => Ok(user),
             Err(err) => {
                 eprintln!("get_user error: {:?}", err);

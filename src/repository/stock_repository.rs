@@ -9,7 +9,6 @@ use crate::models::{StockHolding, StockHoldingResponse, StockInfo, StockMetadata
 /// ===============================
 /// STOCK HOLDINGS
 /// ===============================
-
 /// SQL query: Join stock holdings with metadata and market price data
 const QUERY_SELECT_BY_ACCOUNT_ID: &str = r#"
     SELECT 
@@ -134,7 +133,6 @@ pub async fn delete_stock_holding(
 /// ===============================
 /// STOCK METADATA
 /// ===============================
-
 const QUERY_METADATA_SELECT_ALL: &str = "SELECT * FROM stock_metadata";
 const QUERY_METADATA_SELECT_BY_ID: &str = "SELECT * FROM stock_metadata WHERE id = $1";
 const QUERY_METADATA_UPSERT: &str = "
@@ -145,6 +143,7 @@ const QUERY_METADATA_UPSERT: &str = "
         name = EXCLUDED.name,
         is_active = TRUE
 ";
+#[allow(dead_code)]
 const QUERY_METADATA_DELETE_ALL: &str = "DELETE FROM stock_metadata";
 const QUERY_METADATA_DELETE: &str = "DELETE FROM stock_metadata WHERE id = $1";
 
@@ -219,8 +218,6 @@ pub async fn update_stock_metadata(
     if let Some(n) = name {
         if !first {
             builder.push(", ");
-        } else {
-            first = false;
         }
         builder.push("name = ").push_bind(n);
     }
@@ -242,6 +239,7 @@ pub async fn delete_stock_metadata(pool: &PgPool, id: Uuid) -> Result<(), sqlx::
 }
 
 /// Delete all metadata entries
+#[allow(dead_code)]
 pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(QUERY_METADATA_DELETE_ALL)
         .execute(pool)
@@ -252,7 +250,6 @@ pub async fn delete_all_stock_metadata(pool: &PgPool) -> Result<(), sqlx::Error>
 /// ===============================
 /// STOCK INFOS (Market Data)
 /// ===============================
-
 /// SQL query: Insert or update real-time market data
 const QUERY_UPSERT_STOCK_INFO: &str = "
     INSERT INTO stock_infos (
