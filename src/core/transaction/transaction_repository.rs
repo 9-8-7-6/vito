@@ -3,8 +3,8 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
+use crate::core::asset::asset_repository::get_asset_type_by_asset_id;
 use crate::models::{EnrichedTransaction, Transaction, TransactionType};
-use crate::repository::asset_repository::get_asset_type_by_asset_id;
 
 // SQL query to get all transactions where the given account is either sender or receiver
 const QUERY_SELECT_BY_ACCOUNT_ID: &str =
