@@ -4,8 +4,8 @@ pub mod currency;
 pub mod recurring_transaction;
 pub mod stock;
 pub mod transaction;
-pub mod user;
 
+pub use crate::core::user::user::{Backend, Credentials, User};
 pub use asset::{Asset, AssetList};
 pub use country::{Country, CountryList};
 pub use currency::Currency;
@@ -15,4 +15,3 @@ pub use stock::{
     StockMetadataList,
 };
 pub use transaction::{EnrichedTransaction, EnrichedTransactionList, Transaction, TransactionType};
-pub use user::{Backend, Credentials, User};

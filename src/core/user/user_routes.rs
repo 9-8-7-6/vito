@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::user_handler::*;
+use crate::core::user::user_handler::*;
 
 /// Defines API routes for managing user records
 pub fn user_routes(state: Arc<PgPool>) -> Router {
