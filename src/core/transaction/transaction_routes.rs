@@ -5,7 +5,7 @@ use axum::{
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::transaction_handler::*;
+use crate::core::transaction::transaction_handler::*;
 
 /// Defines routes for managing financial transactions
 pub fn transaction_routes(state: Arc<PgPool>) -> Router {
