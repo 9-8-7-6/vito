@@ -3,7 +3,7 @@ use axum::{
     Router,
 };
 
-use crate::handlers::login_logout_handler::*;
+use crate::core::account::login_logout_handler::*;
 use crate::models::Backend;
 
 /// Defines authentication and account management routes
