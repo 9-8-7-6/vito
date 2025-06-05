@@ -1,4 +1,3 @@
-pub mod asset_routes;
 pub mod country_routes;
 pub mod login_logout_routes;
 pub mod recurring_transaction_routes;
