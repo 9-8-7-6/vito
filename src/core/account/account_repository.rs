@@ -3,7 +3,7 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Postgres, QueryBuilder};
 use uuid::Uuid;
 
-use crate::models::Account;
+use crate::core::account::account::Account;
 
 // SQL query constants for CRUD operations
 const QUERY_SELECT_ALL: &str = "SELECT * FROM accounts";

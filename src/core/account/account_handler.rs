@@ -10,7 +10,7 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::AccountList;
+use crate::core::account::account::AccountList;
 use crate::repository::{
     create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };

@@ -1,4 +1,3 @@
-pub mod account_repository;
 pub mod asset_repository;
 pub mod country_repository;
 pub mod currency_repository;
@@ -7,7 +6,7 @@ pub mod stock_repository;
 pub mod transaction_repository;
 pub mod user_repository;
 
-pub use account_repository::{
+pub use crate::core::account::account_repository::{
     create_account, delete_account, get_account_by_id, get_accounts, update_account_info,
 };
 pub use asset_repository::{

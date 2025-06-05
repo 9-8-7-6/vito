@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::account_handler::*;
+use crate::core::account::account_handler::*;
 
 /// Define routes for account-related operations
 pub fn account_routes(state: Arc<PgPool>) -> Router {
