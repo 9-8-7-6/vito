@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::recurringtransaction_handler::*;
+use crate::core::recurring_transaction::recurringtransaction_handler::*;
 
 /// Defines routes for managing recurring transactions
 pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {

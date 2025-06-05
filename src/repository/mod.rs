@@ -1,6 +1,5 @@
 pub mod country_repository;
 pub mod currency_repository;
-pub mod recurring_transaction_repository;
 pub mod stock_repository;
 
 pub use crate::core::account::account_repository::{
@@ -9,6 +8,10 @@ pub use crate::core::account::account_repository::{
 pub use crate::core::asset::asset_repository::{
     create_asset, delete_asset, get_asset_by_user_id, get_assets, update_asset_balance,
     update_asset_info,
+};
+pub use crate::core::recurring_transaction::recurring_transaction_repository::{
+    create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
+    get_recurring_transactions, update_recurring_transaction_info,
 };
 pub use crate::core::transaction::transaction_repository::{
     create_transaction, delete_transaction, get_transaction_by_transation_id,
@@ -20,10 +23,6 @@ pub use crate::core::user::user_repository::{
 };
 pub use country_repository::{fetch_all_countries, upsert_country};
 pub use currency_repository::upsert_currencies;
-pub use recurring_transaction_repository::{
-    create_recurring_transaction, delete_recurring_transaction, get_recurring_transaction_by_id,
-    get_recurring_transactions, update_recurring_transaction_info,
-};
 pub use stock_repository::{
     create_or_insert_stock_info, create_or_update_stock_metadata, create_stock_holding,
     delete_stock_holding, delete_stock_metadata, get_all_stock_metadata,
