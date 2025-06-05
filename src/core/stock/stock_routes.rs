@@ -5,7 +5,7 @@ use axum::{
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::stock_handler::*;
+use crate::core::stock::stock_handler::*;
 
 /// Defines routes for managing stock holdings and stock metadata
 pub fn stock_routes(state: Arc<PgPool>) -> Router {
