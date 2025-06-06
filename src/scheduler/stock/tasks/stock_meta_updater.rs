@@ -44,7 +44,7 @@ pub async fn update_stock_metadata_every_month(
 async fn run_stock_metadata_job(
     pool: &PgPool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    for country in ["TW", "US"] {
+    for country in ["TW"] {
         match fetch_stock_metadata_by_country(country).await {
             Ok(datas) => {
                 println!("Start to fetch metadata for country: {}", country);

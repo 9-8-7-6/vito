@@ -46,7 +46,7 @@ pub async fn update_stock_info_every_day(pool: &PgPool) -> Result<(), Box<dyn st
 /// - Fetches real-time/daily stock data for TW and US
 /// - Stores them into the database via `fetch_stock_info_by_country`
 async fn run_stock_info_job(pool: &PgPool) -> Result<(), Box<dyn std::error::Error>> {
-    for country in ["TW", "US"] {
+    for country in ["TW"] {
         fetch_stock_info_by_country(pool, country).await?;
     }
 
