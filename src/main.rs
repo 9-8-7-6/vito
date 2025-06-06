@@ -34,6 +34,7 @@ use crate::core::recurring_transaction::recurring_transaction_routes::recurringt
 use crate::core::stock::stock_routes::stock_routes;
 use crate::core::transaction::transaction_routes::transaction_routes;
 use crate::core::user::user_routes::user_routes;
+use crate::db::pool;
 
 /// Struct for holding environment-provided service URLs
 struct Url {
@@ -52,7 +53,7 @@ async fn main() {
     };
 
     // Initialize Postgres connection and run migrations
-    let state: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(db::init_db(&urls.database_url).await);
+    let state: Arc<sqlx::Pool<sqlx::Postgres>> = Arc::new(pool::init_db(&urls.database_url).await);
 
     // Start all scheduled background jobs (e.g., stock metadata updates)
     start_all_schedulers(state.clone()).await;
@@ -63,7 +64,7 @@ async fn main() {
         .expect("Failed to initialize Backend: Check DATABASE_URL");
 
     // Set up Redis session storage and session expiration policy
-    let session_layer = db::init_redis(&urls.redis_url).await;
+    let session_layer = pool::init_redis(&urls.redis_url).await;
 
     // Set up login authentication middleware with Redis-backed sessions
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
