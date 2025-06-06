@@ -1,9 +1,7 @@
 mod core;
 mod db;
-mod handlers;
 mod models;
 mod repository;
-mod routes;
 mod scheduler;
 
 use std::net::SocketAddr;
@@ -31,11 +29,11 @@ use scheduler::start_all_schedulers;
 use crate::core::account::account_routes::account_routes;
 use crate::core::account::login_logout_routes::login_routes;
 use crate::core::asset::asset_routes::asset_routes;
+use crate::core::country::country_routes::country_routes;
 use crate::core::recurring_transaction::recurring_transaction_routes::recurringtransaction_routes;
 use crate::core::stock::stock_routes::stock_routes;
 use crate::core::transaction::transaction_routes::transaction_routes;
 use crate::core::user::user_routes::user_routes;
-use routes::country_routes::country_routes;
 
 /// Struct for holding environment-provided service URLs
 struct Url {

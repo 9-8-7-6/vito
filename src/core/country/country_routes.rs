@@ -2,7 +2,7 @@ use axum::{routing::get, Router};
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::handlers::country_handler::*;
+use crate::core::country::country_handler::*;
 
 /// Defines routes related to country data
 pub fn country_routes(state: Arc<PgPool>) -> Router {
