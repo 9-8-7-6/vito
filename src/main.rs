@@ -69,6 +69,11 @@ async fn main() {
     // Set up login authentication middleware with Redis-backed sessions
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
+    let origin = [
+        "http://localhost:5173".parse().unwrap(),
+        "http://3.107.148.36:5173".parse().unwrap(),
+    ];
+
     // Configure CORS for frontend on http://localhost:5173 (e.g., Vite or Vue dev server)
     let cors = CorsLayer::new()
         .allow_methods([
@@ -79,7 +84,7 @@ async fn main() {
             Method::PUT,
             Method::PATCH,
         ])
-        .allow_origin("http://localhost:5173".parse::<HeaderValue>().unwrap())
+        .allow_origin(origin)
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true);
 
