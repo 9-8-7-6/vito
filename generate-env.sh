@@ -23,10 +23,10 @@ DATABASE_PASSWORD=dbpassword
 DATABASE_HOST=db
 DATABASE_PORT=5432
 
-# RabbitMQ Config
-RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-RABBITMQ_DEFAULT_USER=guest
-RABBITMQ_DEFAULT_PASS=guest
+# # RabbitMQ Config
+# RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+# RABBITMQ_DEFAULT_USER=guest
+# RABBITMQ_DEFAULT_PASS=guest
 
 # Redis Config
 REDIS_URL=redis://127.0.0.1:6379
