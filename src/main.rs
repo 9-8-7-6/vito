@@ -11,12 +11,12 @@ use axum::routing::get;
 use axum::{serve, Json, Router};
 use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
-use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE};
 use http::Method;
 
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use utoipa::{
     openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
     Modify, OpenApi,
@@ -70,24 +70,22 @@ async fn main() {
     // Set up login authentication middleware with Redis-backed sessions
     let auth_layer = AuthManagerLayerBuilder::new(backend.clone(), session_layer.clone()).build();
 
-    let origin = [
-        "http://localhost:5173".parse().unwrap(),
-        "http://3.107.148.36:5173".parse().unwrap(),
-        "https://www.vito-tw.com".parse().unwrap(),
-    ];
-
     // Configure CORS for frontend on http://localhost:5173 (e.g., Vite or Vue dev server)
     let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list(vec![
+            "http://localhost:5173".parse().unwrap(),
+            "http://3.107.148.36:5173".parse().unwrap(),
+            "https://www.vito-tw.com".parse().unwrap(),
+        ]))
         .allow_methods([
             Method::GET,
             Method::POST,
             Method::OPTIONS,
-            Method::DELETE,
             Method::PUT,
+            Method::DELETE,
             Method::PATCH,
         ])
-        .allow_origin(origin)
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION, ACCESS_CONTROL_ALLOW_ORIGIN])
         .allow_credentials(true);
 
     // OpenAPI documentation configuration
@@ -133,10 +131,10 @@ async fn main() {
         .merge(stock_routes(state.clone()))
         .merge(country_routes(state.clone()))
         .merge(login_routes(backend.clone()))
-        .layer(cors) // Apply CORS
         .layer(CookieManagerLayer::new()) // Enable cookie support
         .layer(auth_layer) // Enable login session middleware
-        .layer(session_layer); // Enable Redis session store
+        .layer(session_layer) // Enable Redis session store
+        .layer(cors); // Apply CORS
 
     // Bind and serve the application
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
