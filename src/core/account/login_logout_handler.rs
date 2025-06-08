@@ -5,7 +5,7 @@ use axum::{
 use axum_login::AuthnBackend;
 use serde::Deserialize;
 use serde_json::{json, Value};
-use tower_cookies::{Cookie, Cookies};
+use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 use tower_sessions::Session;
 use uuid::Uuid;
 
@@ -158,10 +158,23 @@ pub async fn api_login(
 
     // Set session ID in cookie (non-HttpOnly for client-side access)
     let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
+    let clear_old_cookie = Cookie::build(("id", ""))
+        .path("/")
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::None)
+        .max_age(time::Duration::ZERO)
+        .build();
+    cookies.add(clear_old_cookie);
+
     let session_cookie = Cookie::build(("id", session_id))
         .path("/")
-        .http_only(false)
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::None)
+        .max_age(time::Duration::days(7))
         .build();
+
     cookies.add(session_cookie);
 
     Ok(Json(json!({
@@ -178,20 +191,16 @@ pub async fn api_login(
 /// Logout current user: clear session and cookie
 pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
     session.clear().await;
+    session.delete().await.ok();
 
-    // Expire the session cookie
-    let cookie = Cookie::build(("id", ""))
+    let clear_host = Cookie::build(("id", ""))
         .path("/")
-        .http_only(false)
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::None)
         .max_age(time::Duration::seconds(0))
         .build();
-
-    session
-        .delete()
-        .await
-        .expect("Failed to delete session in redis");
-
-    cookies.remove(cookie);
+    cookies.add(clear_host);
 
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
 }
@@ -217,12 +226,25 @@ pub async fn api_delete_account(
 
     // Clean up session and cookie
     session.clear().await;
-    let cookie = Cookie::build(("id", ""))
+    session.delete().await.ok();
+
+    let exp_host = Cookie::build(("id", ""))
         .path("/")
-        .http_only(false)
-        .max_age(time::Duration::seconds(-1))
+        .max_age(time::Duration::seconds(0))
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::None)
         .build();
-    cookies.remove(cookie);
+    cookies.add(exp_host);
+
+    let exp_domain = Cookie::build(("id", ""))
+        .path("/")
+        .max_age(time::Duration::seconds(0))
+        .http_only(true)
+        .secure(true)
+        .same_site(SameSite::None)
+        .build();
+    cookies.remove(exp_domain);
 
     Ok(Json(json!({
         "status": "success",
