@@ -7,11 +7,12 @@ mod scheduler;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
-use axum::{serve, Router};
+use axum::routing::get;
+use axum::{serve, Json, Router};
 use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{AUTHORIZATION, CONTENT_TYPE};
-use http::{HeaderValue, Method};
+use http::Method;
 
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
@@ -72,6 +73,7 @@ async fn main() {
     let origin = [
         "http://localhost:5173".parse().unwrap(),
         "http://3.107.148.36:5173".parse().unwrap(),
+        "https://www.vito-tw.com".parse().unwrap(),
     ];
 
     // Configure CORS for frontend on http://localhost:5173 (e.g., Vite or Vue dev server)
@@ -114,9 +116,14 @@ async fn main() {
     // Split OpenAPI documentation router and spec
     let (openapi_router, _api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
 
+    async fn health_check() -> Json<&'static str> {
+        Json("OK")
+    }
+
     // Compose all routes into one main router
     let routes_all = Router::new()
         // .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone())) // Optional Swagger UI
+        .route("/healthz", get(health_check))
         .merge(openapi_router) // OpenAPI JSON output
         .merge(account_routes(state.clone()))
         .merge(user_routes(state.clone()))
