@@ -1,15 +1,15 @@
+use crate::models::{Backend, Credentials, User};
 use axum::{
     extract::{Json, State},
     http::StatusCode,
 };
 use axum_login::AuthnBackend;
+use log::info;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 use tower_sessions::Session;
 use uuid::Uuid;
-
-use crate::models::{Backend, Credentials, User};
 
 /// Payload structure for user registration
 #[derive(Debug, Deserialize)]
@@ -186,8 +186,29 @@ pub async fn api_login(
 
 /// Logout current user: clear session and cookie
 pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
+    info!("api_logout invoked");
+
+    for cookie in cookies.list() {
+        let name = cookie.name();
+        let value = cookie.value();
+        info!("Cookie: {} = {}", name, value);
+    }
+
+    if let Some(cookie) = cookies.get("id") {
+        info!("Found session id cookie: {}", cookie.value());
+    } else {
+        info!("No session id cookie present");
+    }
+
+    info!("start to clear session");
     session.clear().await;
-    session.delete().await.ok();
+    info!("finish to clear session");
+
+    if let Err(e) = session.delete().await {
+        info!("session.delete() error: {:?}", e);
+    } else {
+        info!("session.delete() ok");
+    }
 
     let clear_host = Cookie::build(("id", ""))
         .path("/")
@@ -196,8 +217,12 @@ pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
         .same_site(SameSite::None)
         .max_age(time::Duration::seconds(0))
         .build();
-    cookies.add(clear_host);
+    info!("clearing cookie 'id'");
 
+    cookies.add(clear_host);
+    info!("cookie 'id' cleared in response");
+
+    info!("api_logout returning success");
     Json(json!({ "status": "success", "message": "Logged out successfully" }))
 }
 

@@ -13,6 +13,8 @@ use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE};
 use http::Method;
+use tower_http::trace::TraceLayer;
+use tracing_subscriber;
 
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
@@ -45,6 +47,7 @@ struct Url {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     dotenv().ok();
 
     // Load database and Redis URLs from .env
@@ -134,7 +137,8 @@ async fn main() {
         .layer(CookieManagerLayer::new()) // Enable cookie support
         .layer(auth_layer) // Enable login session middleware
         .layer(session_layer) // Enable Redis session store
-        .layer(cors); // Apply CORS
+        .layer(cors) // Apply CORS
+        .layer(TraceLayer::new_for_http());
 
     // Bind and serve the application
     let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
