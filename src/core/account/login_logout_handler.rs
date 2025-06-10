@@ -123,7 +123,7 @@ pub async fn api_login(
     };
 
     // Authenticate the user
-    let user = match backend.authenticate(credentials).await {
+    let user: User = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
         Ok(None) => {
             eprintln!(
@@ -180,11 +180,7 @@ pub async fn api_login(
     Ok(Json(json!({
         "status": "success",
         "message": "Login successful",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email
-        }
+        "uuid": user.id,
     })))
 }
 
@@ -276,7 +272,7 @@ pub async fn check_session(
     if user.is_some() {
         return Ok(Json(json!({
             "status": "success",
-            "message": "Session is valid"
+            "message": "Session is valid",
         })));
     }
 
