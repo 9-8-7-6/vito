@@ -78,7 +78,7 @@ async fn main() {
         .allow_origin(AllowOrigin::list(vec![
             "http://localhost:5173".parse().unwrap(),
             "http://3.107.148.36:5173".parse().unwrap(),
-            "https://www.vito-tw.com".parse().unwrap(),
+            "https://vito-tw.com".parse().unwrap(),
         ]))
         .allow_methods([
             Method::GET,
