@@ -7,8 +7,17 @@ mod scheduler;
 use std::net::SocketAddr;
 use std::sync::Arc;
 
+use axum::body::Body;
+use axum::http::Request;
+use axum::response::Response;
 use axum::routing::get;
-use axum::{serve, Json, Router};
+use axum::{
+    middleware::{self, Next},
+    serve, Json, Router,
+};
+use log::info;
+use std::time::Instant;
+
 use axum_login::AuthManagerLayerBuilder;
 use dotenvy::dotenv;
 use http::header::{ACCESS_CONTROL_ALLOW_ORIGIN, AUTHORIZATION, CONTENT_TYPE};
@@ -43,6 +52,19 @@ use crate::db::pool;
 struct Url {
     database_url: String,
     redis_url: String,
+}
+
+async fn log_all(req: Request<Body>, next: Next) -> Response {
+    let method = req.method().clone();
+    let uri = req.uri().clone();
+    info!("--> {} {}", method, uri);
+
+    let start = Instant::now();
+    let resp = next.run(req).await;
+    let elapsed = start.elapsed();
+    info!("<-- {} {} ({} μs)", method, uri, elapsed.as_micros());
+
+    resp
 }
 
 #[tokio::main]
@@ -134,6 +156,7 @@ async fn main() {
         .merge(stock_routes(state.clone()))
         .merge(country_routes(state.clone()))
         .merge(login_routes(backend.clone()))
+        .layer(middleware::from_fn(log_all))
         .layer(CookieManagerLayer::new()) // Enable cookie support
         .layer(auth_layer) // Enable login session middleware
         .layer(session_layer) // Enable Redis session store
@@ -141,7 +164,7 @@ async fn main() {
         .layer(TraceLayer::new_for_http());
 
     // Bind and serve the application
-    let addr: SocketAddr = "0.0.0.0:8000".parse().unwrap();
+    let addr: SocketAddr = "[::]:8000".parse().unwrap();
     println!("🚀 Server running on {}", addr);
 
     let listener = TcpListener::bind(addr).await.unwrap();
