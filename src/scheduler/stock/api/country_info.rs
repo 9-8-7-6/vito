@@ -36,7 +36,7 @@ pub async fn call_country_info_api() -> Result<Vec<Country>, Box<dyn std::error:
 
     // Send a GET request to the REST Countries API
     let response = client
-        .get("https://restcountries.com/v3.1/all")
+        .get("https://restcountries.com/v3.1/all?fields=cca2,name,region,subregion,timezones,flags")
         .send()
         .await?;
 
