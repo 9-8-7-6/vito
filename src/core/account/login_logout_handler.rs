@@ -33,37 +33,36 @@ pub struct LoginPayload {
 pub async fn api_register(
     State(backend): State<Backend>,
     payload: Json<RegisterPayload>,
-) -> Result<Json<Value>, StatusCode> {
+) -> Result<(StatusCode, Json<Value>), StatusCode> {
     // Check for duplicate username
     if let Ok(Some(_)) = backend.get_user_by_username(&payload.username).await {
-        return Ok(Json(json!({
-            "status": "fail",
-            "message": "Username already exists",
-            "code": 409
-        })));
+        return Ok((
+            StatusCode::CONFLICT,
+            Json(json!({
+                "status": "fail",
+                "message": "Username already exists",
+                "code": 409
+            })),
+        ));
     }
 
     // Check for duplicate email
     if let Ok(Some(_)) = backend.get_user_by_email(&payload.email).await {
-        return Ok(Json(json!({
-            "status": "fail",
-            "message": "Email already registered",
-            "code": 409
-        })));
+        return Ok((
+            StatusCode::CONFLICT,
+            Json(json!({
+                "status": "fail",
+                "message": "Email already registered",
+                "code": 409
+            })),
+        ));
     }
 
     // Hash the password
-    let hashed_password = match User::hash_password(&payload.password) {
-        Ok(hash) => hash,
-        Err(err) => {
-            eprintln!("Password hashing failed: {:?}", err);
-            return Ok(Json(json!({
-                "status": "fail",
-                "message": "Internal error while hashing password",
-                "code": 500
-            })));
-        }
-    };
+    let hashed_password = User::hash_password(&payload.password).map_err(|err| {
+        eprintln!("Password hashing failed: {:?}", err);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     // Create new User struct
     let new_user = User {
@@ -81,32 +80,27 @@ pub async fn api_register(
     };
 
     // Save user to database
-    if let Err(err) = backend.create_user_(&new_user).await {
+    backend.create_user_(&new_user).await.map_err(|err| {
         eprintln!("Failed to create user: {:?}", err);
-        return Ok(Json(json!({
-            "status": "fail",
-            "message": "Failed to create user",
-            "code": 500
-        })));
-    }
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
     // Create default account for the new user
-    if let Err(err) = backend.create_account_(&new_user).await {
+    backend.create_account_(&new_user).await.map_err(|err| {
         eprintln!(
             "Failed to create account for user {}: {:?}",
             new_user.id, err
         );
-        return Ok(Json(json!({
-            "status": "fail",
-            "message": "Failed to create account",
-            "code": 500
-        })));
-    }
+        StatusCode::INTERNAL_SERVER_ERROR
+    })?;
 
-    Ok(Json(json!({
-        "status": "success",
-        "message": "User registered successfully"
-    })))
+    Ok((
+        StatusCode::CREATED,
+        Json(json!({
+            "status": "success",
+            "message": "User registered successfully"
+        })),
+    ))
 }
 
 /// Log in a user using username/password and start a session
