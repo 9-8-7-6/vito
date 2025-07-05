@@ -46,6 +46,7 @@ use crate::core::recurring_transaction::recurring_transaction_routes::recurringt
 use crate::core::stock::stock_routes::stock_routes;
 use crate::core::transaction::transaction_routes::transaction_routes;
 use crate::core::user::user_routes::user_routes;
+use crate::core::currency::currency_holding_routes::currency_routes;
 use crate::db::pool;
 
 /// Struct for holding environment-provided service URLs
@@ -156,6 +157,7 @@ async fn main() {
         .merge(stock_routes(state.clone()))
         .merge(country_routes(state.clone()))
         .merge(login_routes(backend.clone()))
+        .merge(currency_routes(state.clone()))
         .layer(middleware::from_fn(log_all))
         .layer(CookieManagerLayer::new()) // Enable cookie support
         .layer(auth_layer) // Enable login session middleware
