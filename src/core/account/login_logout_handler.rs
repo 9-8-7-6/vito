@@ -8,6 +8,7 @@ use axum_login::AuthnBackend;
 use log::info;
 use serde::Deserialize;
 use serde_json::{json, Value};
+use time::Duration;
 use tower_cookies::{cookie::SameSite, Cookie, Cookies};
 use tower_sessions::Session;
 use uuid::Uuid;
@@ -133,7 +134,6 @@ pub async fn api_login(
         }
     };
 
-    // ✅ 使用 axum-login 提供的登入方法（會自動設 session）
     if let Err(e) = auth_session.login(&user).await {
         eprintln!("Session login failed: {:?}", e);
         return Ok(Json(json!({
@@ -151,76 +151,61 @@ pub async fn api_login(
 }
 
 /// Logout current user: clear session and cookie
-pub async fn api_logout(session: Session, cookies: Cookies) -> Json<Value> {
-    if let Some(cookie) = cookies.get("id") {
-        info!("Found session id cookie: {}", cookie.value());
-    } else {
-        info!("No session id cookie present");
+pub async fn api_logout(
+    mut auth_session: AuthSession<Backend>,
+    cookies: Cookies,
+) -> Json<serde_json::Value> {
+    if let Err(err) = auth_session.logout().await {
+        eprintln!("Failed to logout: {:?}", err);
     }
 
-    if let Err(e) = session.flush().await {
-        info!("session.flush() error: {:?}", e);
-    }
-    info!("Finish flush session");
-
-    let clear_host = Cookie::build(("id", ""))
+    let expired_cookie = Cookie::build(("id", ""))
         .path("/")
         .http_only(true)
         .secure(true)
         .same_site(SameSite::None)
-        .max_age(time::Duration::seconds(0))
+        .max_age(Duration::ZERO)
         .build();
 
-    cookies.add(clear_host);
-    info!("cookie 'id' cleared in response");
+    cookies.add(expired_cookie);
 
-    Json(json!({ "status": "success", "message": "Logged out successfully" }))
+    Json(json!({
+        "status": "success",
+        "message": "Logged out and cookie cleared"
+    }))
 }
 
 /// Delete the currently authenticated user’s account
 pub async fn api_delete_account(
-    session: Session,
+    mut auth_session: axum_login::AuthSession<Backend>,
     cookies: Cookies,
     State(backend): State<Backend>,
-) -> Result<Json<Value>, StatusCode> {
-    // Get user ID from session
-    let user_id: Option<Uuid> = session.get("user_id").await.unwrap_or(None);
-    if user_id.is_none() {
+) -> Result<Json<serde_json::Value>, StatusCode> {
+    let Some(user) = auth_session.user.clone() else {
         return Err(StatusCode::UNAUTHORIZED);
-    }
+    };
 
-    // Delete user
-    let user_id = user_id.unwrap();
     backend
-        .delete_user(&user_id)
+        .delete_user(&user.id)
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
 
-    // Clean up session and cookie
-    session.clear().await;
-    session.delete().await.ok();
+    if let Err(e) = auth_session.logout().await {
+        eprintln!("Logout error: {:?}", e);
+    }
 
-    let exp_host = Cookie::build(("id", ""))
+    let expired_cookie = Cookie::build(("id", ""))
         .path("/")
-        .max_age(time::Duration::seconds(0))
         .http_only(true)
         .secure(true)
         .same_site(SameSite::None)
+        .max_age(Duration::ZERO)
         .build();
-    cookies.add(exp_host);
-
-    let exp_domain = Cookie::build(("id", ""))
-        .path("/")
-        .max_age(time::Duration::seconds(0))
-        .http_only(true)
-        .secure(true)
-        .same_site(SameSite::None)
-        .build();
-    cookies.remove(exp_domain);
+    cookies.add(expired_cookie);
 
     Ok(Json(json!({
         "status": "success",
-        "message": "Account deleted successfully"
+        "message": "Account deleted and session cleared"
     })))
 }
 
