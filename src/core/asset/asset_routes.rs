@@ -1,8 +1,9 @@
 use axum::{routing::get, Router};
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::core::asset::asset_handler::*;
+use crate::{core::asset::asset_handler::*, models::Backend};
 
 /// Defines routes for asset-related operations
 pub fn asset_routes(state: Arc<PgPool>) -> Router {
@@ -23,6 +24,6 @@ pub fn asset_routes(state: Arc<PgPool>) -> Router {
                 .delete(delete_asset_handler),
         )
         // Uncomment to enforce login on all asset routes
-        // .route_layer(login_required!(Backend, login_url = "/login"))
+        .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state) // Share PgPool state with all route handlers
 }

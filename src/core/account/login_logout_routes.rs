@@ -15,8 +15,6 @@ pub fn login_routes(backend: Backend) -> Router {
         .route("/logout", options(api_logout))
         // POST /delete_account -> Deletes the current authenticated user's account
         .route("/delete_account", post(api_delete_account))
-        // Optionally protect routes with session-based login
-        // .route_layer(login_required!(Backend, login_url = "/login"))
         // POST /login     -> Authenticate user credentials and set session
         .route("/login", post(api_login))
         // POST /register  -> Create a new user account

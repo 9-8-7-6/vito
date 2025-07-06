@@ -2,10 +2,11 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::core::currency::currency_holding_handler::*;
+use crate::{core::currency::currency_holding_handler::*, models::Backend};
 
 /// Defines routes for managing currency holdings
 pub fn currency_routes(state: Arc<PgPool>) -> Router {
@@ -27,5 +28,6 @@ pub fn currency_routes(state: Arc<PgPool>) -> Router {
             "/currency-holding/{id}",
             put(update_currency_holding_handler).delete(delete_currency_holding_handler),
         )
+        .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state)
 }

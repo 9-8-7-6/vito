@@ -1,8 +1,9 @@
 use axum::{routing::get, Router};
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::core::recurring_transaction::recurringtransaction_handler::*;
+use crate::{core::recurring_transaction::recurringtransaction_handler::*, models::Backend};
 
 /// Defines routes for managing recurring transactions
 pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
@@ -23,7 +24,7 @@ pub fn recurringtransaction_routes(state: Arc<PgPool>) -> Router {
                 .delete(delete_recurring_transaction_handler),
         )
         // Enable this to protect routes with login middleware
-        // .route_layer(login_required!(Backend, login_url = "/login"))
+        .route_layer(login_required!(Backend, login_url = "/login"))
         .with_state(state) // Inject database connection into all handlers
 }
 #[cfg(test)]

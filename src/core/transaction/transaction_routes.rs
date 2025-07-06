@@ -2,10 +2,11 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::core::transaction::transaction_handler::*;
+use crate::{core::transaction::transaction_handler::*, models::Backend};
 
 /// Defines routes for managing financial transactions
 pub fn transaction_routes(state: Arc<PgPool>) -> Router {
@@ -29,7 +30,7 @@ pub fn transaction_routes(state: Arc<PgPool>) -> Router {
             get(get_transaction_by_account_id_handler),
         )
         // Optional: Enable this line to restrict transaction routes to authenticated users
-        // .route_layer(login_required!(Backend, login_url = "/login"))
+        .route_layer(login_required!(Backend, login_url = "/login"))
         // Share the database connection pool with all route handlers
         .with_state(state)
 }

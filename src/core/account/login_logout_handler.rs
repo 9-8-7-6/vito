@@ -3,6 +3,7 @@ use axum::{
     extract::{Json, State},
     http::StatusCode,
 };
+use axum_login::AuthSession;
 use axum_login::AuthnBackend;
 use log::info;
 use serde::Deserialize;
@@ -105,71 +106,42 @@ pub async fn api_register(
 
 /// Log in a user using username/password and start a session
 pub async fn api_login(
-    cookies: Cookies,
-    session: Session,
+    mut auth_session: AuthSession<Backend>,
     State(backend): State<Backend>,
     payload: Json<LoginPayload>,
 ) -> Result<Json<Value>, StatusCode> {
-    // Build credential object
     let credentials = Credentials {
         username: payload.username.clone(),
         password: payload.password.clone(),
     };
 
-    // Authenticate the user
     let user: User = match backend.authenticate(credentials).await {
         Ok(Some(user)) => user,
         Ok(None) => {
-            eprintln!(
-                "Login failed: invalid credentials for '{}'",
-                payload.username
-            );
             return Ok(Json(json!({
                 "status": "fail",
                 "message": "Invalid account or password",
                 "code": 401
             })));
         }
-        Err(err) => {
-            eprintln!("Authentication error: {:?}", err);
+        Err(_) => {
             return Ok(Json(json!({
                 "status": "fail",
-                "message": "Internal server error during login",
+                "message": "Internal error",
                 "code": 500
             })));
         }
     };
 
-    // Store user_id in session
-    if let Err(err) = session.insert("user_id", user.id.to_string()).await {
-        eprintln!("Failed to insert session for user {}: {:?}", user.id, err);
+    // ✅ 使用 axum-login 提供的登入方法（會自動設 session）
+    if let Err(e) = auth_session.login(&user).await {
+        eprintln!("Session login failed: {:?}", e);
         return Ok(Json(json!({
             "status": "fail",
-            "message": "Failed to set session",
+            "message": "Failed to start session",
             "code": 500
         })));
     }
-
-    // Set session ID in cookie (non-HttpOnly for client-side access)
-    let session_id = session.id().map(|id| id.to_string()).unwrap_or_default();
-    let clear_old_cookie = Cookie::build(("id", ""))
-        .path("/")
-        .http_only(true)
-        .secure(true)
-        .same_site(SameSite::None)
-        .max_age(time::Duration::ZERO)
-        .build();
-    cookies.add(clear_old_cookie);
-
-    let session_cookie = Cookie::build(("id", session_id))
-        .path("/")
-        .http_only(true)
-        .secure(true)
-        .same_site(SameSite::None)
-        .max_age(time::Duration::days(7))
-        .build();
-
-    cookies.add(session_cookie);
 
     Ok(Json(json!({
         "status": "success",
@@ -254,29 +226,14 @@ pub async fn api_delete_account(
 
 /// Check if current session is valid and bound to a user
 pub async fn check_session(
-    State(backend): State<Backend>,
-    session: Session,
+    auth_session: AuthSession<Backend>,
 ) -> Result<Json<serde_json::Value>, StatusCode> {
-    let (is_valid, user_id_str) = backend
-        .is_session_valid(&session)
-        .await
-        .unwrap_or((false, "".to_string()));
-
-    if !is_valid {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
-
-    let user_id = Uuid::parse_str(&user_id_str).map_err(|_| StatusCode::UNAUTHORIZED)?;
-
-    let user = backend
-        .get_user(&user_id)
-        .await
-        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-
-    if user.is_some() {
+    if let Some(user) = auth_session.user {
         return Ok(Json(json!({
             "status": "success",
             "message": "Session is valid",
+            "user_id": user.id,
+            "username": user.username,
         })));
     }
 

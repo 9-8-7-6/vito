@@ -2,10 +2,11 @@ use axum::{
     routing::{get, post, put},
     Router,
 };
+use axum_login::login_required;
 use sqlx::PgPool;
 use std::sync::Arc;
 
-use crate::core::stock::stock_handler::*;
+use crate::{core::stock::stock_handler::*, models::Backend};
 
 /// Defines routes for managing stock holdings and stock metadata
 pub fn stock_routes(state: Arc<PgPool>) -> Router {
@@ -43,7 +44,7 @@ pub fn stock_routes(state: Arc<PgPool>) -> Router {
                 .delete(delete_stock_metadata_handler),
         )
         // Optional: Require authentication for all stock-related routes
-        // .route_layer(login_required!(Backend, login_url = "/login"))
+        .route_layer(login_required!(Backend, login_url = "/login"))
         // Inject shared database pool into all route handlers
         .with_state(state)
 }
