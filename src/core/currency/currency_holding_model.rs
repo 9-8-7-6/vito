@@ -50,25 +50,3 @@ impl IntoResponse for CurrencyHoldingList {
         Json(self).into_response()
     }
 }
-
-#[derive(Debug, Serialize, Clone)]
-pub struct CurrencyHoldingResponse {
-    pub id: Uuid,
-    pub account_id: Uuid,
-    pub country: String,
-    pub currency_code: String,
-    pub amount_held: Decimal,
-    pub average_cost_per_unit: Option<Decimal>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
-    pub current_price: Option<Decimal>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CurrencyHoldingResponseList(pub Vec<CurrencyHoldingResponse>);
-
-impl IntoResponse for CurrencyHoldingResponseList {
-    fn into_response(self) -> axum::response::Response {
-        Json(self).into_response()
-    }
-}

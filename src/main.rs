@@ -28,12 +28,6 @@ use tracing_subscriber;
 use tokio::net::TcpListener;
 use tower_cookies::CookieManagerLayer;
 use tower_http::cors::{AllowOrigin, CorsLayer};
-use utoipa::{
-    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
-    Modify, OpenApi,
-};
-use utoipa_axum::router::OpenApiRouter;
-// use utoipa_swagger_ui::SwaggerUi;
 
 use crate::models::Backend;
 use scheduler::start_all_schedulers;
@@ -114,32 +108,6 @@ async fn main() {
         .allow_headers([CONTENT_TYPE, AUTHORIZATION, ACCESS_CONTROL_ALLOW_ORIGIN])
         .allow_credentials(true);
 
-    // OpenAPI documentation configuration
-    #[derive(OpenApi)]
-    #[openapi(
-        modifiers(&SecurityAddon),
-        tags(
-            (name = "vito", description = "vito items management API")
-        )
-    )]
-    struct ApiDoc;
-
-    // Adds security scheme to OpenAPI spec
-    struct SecurityAddon;
-    impl Modify for SecurityAddon {
-        fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
-            if let Some(components) = openapi.components.as_mut() {
-                components.add_security_scheme(
-                    "api_key",
-                    SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("vito_apikey"))),
-                )
-            }
-        }
-    }
-
-    // Split OpenAPI documentation router and spec
-    let (openapi_router, _api) = OpenApiRouter::with_openapi(ApiDoc::openapi()).split_for_parts();
-
     async fn health_check() -> Json<&'static str> {
         Json("OK")
     }
@@ -148,7 +116,6 @@ async fn main() {
     let routes_all = Router::new()
         // .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", api.clone())) // Optional Swagger UI
         .route("/healthz", get(health_check))
-        .merge(openapi_router) // OpenAPI JSON output
         .merge(account_routes(state.clone()))
         .merge(user_routes(state.clone()))
         .merge(asset_routes(state.clone()))

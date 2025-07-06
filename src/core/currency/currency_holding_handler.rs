@@ -11,19 +11,13 @@ use sqlx::PgPool;
 use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
-use crate::{
-    core::currency::currency_holding_model::CurrencyHoldingResponse,
-    scheduler::stock::api::stock_info::us,
-};
+use crate::scheduler::stock::api::stock_info::us;
 
-use super::currency_holding_model::{
-    CurrencyHolding, CurrencyHoldingList, CurrencyHoldingResponseList,
-};
+use super::currency_holding_model::{CurrencyHolding, CurrencyHoldingList};
 use super::currency_holding_repository::{
     create_currency_holding, delete_currency_holding, get_currency_holdings_by_account_id,
     update_currency_holding_info,
 };
-use super::currency_scraper::currency_scraper;
 
 /// Payload format for creating a currency holding
 #[derive(Deserialize)]
@@ -48,44 +42,16 @@ pub async fn get_currency_holdings_by_account_handler(
     Path(account_id): Path<Uuid>,
 ) -> impl IntoResponse {
     // 2a) load the raw rows
-    let holdings = match get_currency_holdings_by_account_id(&pool, account_id).await {
-        Ok(h) => h,
+    match get_currency_holdings_by_account_id(&pool, account_id).await {
+        Ok(holdings) => CurrencyHoldingList(holdings).into_response(),
         Err(err) => {
             eprintln!(
                 "Error fetching currency holdings by account {}: {:#?}",
                 account_id, err
             );
-            return StatusCode::NOT_FOUND.into_response();
+            StatusCode::NOT_FOUND.into_response()
         }
-    };
-
-    // 2b) scrape all live rates in one go
-    let codes: Vec<String> = holdings.iter().map(|h| h.currency_code.clone()).collect();
-    let price_map = match currency_scraper(&codes).await {
-        Ok(m) => m,
-        Err(err) => {
-            eprintln!("Error fetching live prices: {:#?}", err);
-            HashMap::new()
-        }
-    };
-
-    // 2c) zip into your new response type
-    let resp: Vec<CurrencyHoldingResponse> = holdings
-        .into_iter()
-        .map(|h| CurrencyHoldingResponse {
-            id: h.id,
-            account_id: h.account_id,
-            country: h.country,
-            currency_code: h.currency_code.clone(),
-            amount_held: h.amount_held,
-            average_cost_per_unit: h.average_cost_per_unit,
-            created_at: h.created_at,
-            updated_at: h.updated_at,
-            current_price: price_map.get(&h.currency_code).cloned(),
-        })
-        .collect();
-
-    CurrencyHoldingResponseList(resp).into_response()
+    }
 }
 
 /// Handler: Create a currency holding record for an account
