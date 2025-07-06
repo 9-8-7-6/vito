@@ -1,7 +1,7 @@
-use sqlx::{PgPool, Row, QueryBuilder, Postgres};
-use uuid::Uuid;
-use rust_decimal::Decimal;
 use chrono::Utc;
+use rust_decimal::Decimal;
+use sqlx::{PgPool, Postgres, QueryBuilder, Row};
+use uuid::Uuid;
 
 use super::currency_holding_model::CurrencyHolding;
 
@@ -76,11 +76,17 @@ pub async fn update_currency_holding_info(
     let mut builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE currency_holding SET ");
 
     if let Some(amount_held) = amount_held {
-        builder.push("amount_held = ").push_bind(amount_held).push(", ");
+        builder
+            .push("amount_held = ")
+            .push_bind(amount_held)
+            .push(", ");
     }
 
     if let Some(average_cost_per_unit) = average_cost_per_unit {
-        builder.push("average_cost_per_unit = ").push_bind(Some(average_cost_per_unit)).push(", ");
+        builder
+            .push("average_cost_per_unit = ")
+            .push_bind(Some(average_cost_per_unit))
+            .push(", ");
     }
 
     builder.push("updated_at = ").push_bind(Utc::now());

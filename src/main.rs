@@ -42,11 +42,11 @@ use crate::core::account::account_routes::account_routes;
 use crate::core::account::login_logout_routes::login_routes;
 use crate::core::asset::asset_routes::asset_routes;
 use crate::core::country::country_routes::country_routes;
+use crate::core::currency::currency_holding_routes::currency_routes;
 use crate::core::recurring_transaction::recurring_transaction_routes::recurringtransaction_routes;
 use crate::core::stock::stock_routes::stock_routes;
 use crate::core::transaction::transaction_routes::transaction_routes;
 use crate::core::user::user_routes::user_routes;
-use crate::core::currency::currency_holding_routes::currency_routes;
 use crate::db::pool;
 
 /// Struct for holding environment-provided service URLs

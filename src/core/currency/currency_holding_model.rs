@@ -1,9 +1,9 @@
 use axum::response::{IntoResponse, Json};
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
 
 /// Represents a currency holding record from the database
 #[derive(Debug, Serialize, Deserialize, FromRow, Clone)]
@@ -46,6 +46,28 @@ pub struct CurrencyHoldingList(pub Vec<CurrencyHolding>);
 
 /// Allows `CurrencyHoldingList` to be returned directly as a JSON response in Axum route handlers
 impl IntoResponse for CurrencyHoldingList {
+    fn into_response(self) -> axum::response::Response {
+        Json(self).into_response()
+    }
+}
+
+#[derive(Debug, Serialize, Clone)]
+pub struct CurrencyHoldingResponse {
+    pub id: Uuid,
+    pub account_id: Uuid,
+    pub country: String,
+    pub currency_code: String,
+    pub amount_held: Decimal,
+    pub average_cost_per_unit: Option<Decimal>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub current_price: Option<Decimal>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CurrencyHoldingResponseList(pub Vec<CurrencyHoldingResponse>);
+
+impl IntoResponse for CurrencyHoldingResponseList {
     fn into_response(self) -> axum::response::Response {
         Json(self).into_response()
     }

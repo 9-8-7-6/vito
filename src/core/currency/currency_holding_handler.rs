@@ -4,20 +4,26 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use chrono::NaiveDateTime;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::PgPool;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
-use chrono::NaiveDateTime;
 
-use super::currency_holding_model::{CurrencyHolding, CurrencyHoldingList};
-use super::currency_holding_repository::{
-    get_currency_holdings_by_account_id,
-    create_currency_holding,
-    update_currency_holding_info,
-    delete_currency_holding,
+use crate::{
+    core::currency::currency_holding_model::CurrencyHoldingResponse,
+    scheduler::stock::api::stock_info::us,
 };
+
+use super::currency_holding_model::{
+    CurrencyHolding, CurrencyHoldingList, CurrencyHoldingResponseList,
+};
+use super::currency_holding_repository::{
+    create_currency_holding, delete_currency_holding, get_currency_holdings_by_account_id,
+    update_currency_holding_info,
+};
+use super::currency_scraper::currency_scraper;
 
 /// Payload format for creating a currency holding
 #[derive(Deserialize)]
@@ -41,16 +47,45 @@ pub async fn get_currency_holdings_by_account_handler(
     State(pool): State<Arc<PgPool>>,
     Path(account_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    match get_currency_holdings_by_account_id(&pool, account_id).await {
-        Ok(holdings) => CurrencyHoldingList(holdings).into_response(),
+    // 2a) load the raw rows
+    let holdings = match get_currency_holdings_by_account_id(&pool, account_id).await {
+        Ok(h) => h,
         Err(err) => {
             eprintln!(
                 "Error fetching currency holdings by account {}: {:#?}",
                 account_id, err
             );
-            StatusCode::NOT_FOUND.into_response()
+            return StatusCode::NOT_FOUND.into_response();
         }
-    }
+    };
+
+    // 2b) scrape all live rates in one go
+    let codes: Vec<String> = holdings.iter().map(|h| h.currency_code.clone()).collect();
+    let price_map = match currency_scraper(&codes).await {
+        Ok(m) => m,
+        Err(err) => {
+            eprintln!("Error fetching live prices: {:#?}", err);
+            HashMap::new()
+        }
+    };
+
+    // 2c) zip into your new response type
+    let resp: Vec<CurrencyHoldingResponse> = holdings
+        .into_iter()
+        .map(|h| CurrencyHoldingResponse {
+            id: h.id,
+            account_id: h.account_id,
+            country: h.country,
+            currency_code: h.currency_code.clone(),
+            amount_held: h.amount_held,
+            average_cost_per_unit: h.average_cost_per_unit,
+            created_at: h.created_at,
+            updated_at: h.updated_at,
+            current_price: price_map.get(&h.currency_code).cloned(),
+        })
+        .collect();
+
+    CurrencyHoldingResponseList(resp).into_response()
 }
 
 /// Handler: Create a currency holding record for an account
@@ -85,7 +120,14 @@ pub async fn update_currency_holding_handler(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateCurrencyHoldingRequest>,
 ) -> impl IntoResponse {
-    match update_currency_holding_info(&pool, id, payload.amount_held, payload.average_cost_per_unit).await {
+    match update_currency_holding_info(
+        &pool,
+        id,
+        payload.amount_held,
+        payload.average_cost_per_unit,
+    )
+    .await
+    {
         Ok(holding) => holding.into_response(),
         Err(err) => {
             eprintln!("Error updating currency holding {}: {:#?}", id, err);
